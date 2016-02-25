@@ -1,3 +1,5 @@
+#!/usr/bin/Rscript
+
 library(grid)
 library(ggplot2)
 library(plyr)
@@ -58,7 +60,7 @@ referencePlot <- function(cov, reportName){
   dev.off()
 }
 
-assemblyPlot <- function(toPlot, toPlotNames, fileReport, assemblerMQ, assemblerName, reportName, facet=FALSE, height=8, sortBy="cov"){
+assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov"){
   fileReport$gID <- factor(fileReport$gID, levels = fileReport$gID[order(fileReport$cov)])
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
@@ -77,7 +79,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, assemblerMQ, assembler
 fileReport = cbind.data.frame(fileReport, misassemblies.per.MB=fileReport$X..misassemblies/(fileReport$Total.length/1000000))
 
 referencePlot(infos, "references.pdf")
-assemblyPlot(toPlot, toPlotNames , fileReport, assemblerMQ, assemblerName, "coverage.pdf", FALSE)
-assemblyPlot(toPlot, toPlotNames , fileReport, assemblerMQ, assemblerName, "coverage-facet.pdf", TRUE, height=12)
-assemblyPlot(toPlot, toPlotNames , fileReport, assemblerMQ, assemblerName, "gc.pdf", facet=FALSE, sortBy="gc")
-assemblyPlot(toPlot, toPlotNames , fileReport, assemblerMQ, assemblerName, "gc-facet.pdf", facet=TRUE, sortBy="gc", height=12)
+assemblyPlot(toPlot, toPlotNames , fileReport, "coverage.pdf", FALSE)
+assemblyPlot(toPlot, toPlotNames , fileReport, "coverage-facet.pdf", TRUE, height=12)
+assemblyPlot(toPlot, toPlotNames , fileReport, "gc.pdf", facet=FALSE, sortBy="gc")
+assemblyPlot(toPlot, toPlotNames , fileReport, "gc-facet.pdf", facet=TRUE, sortBy="gc", height=12)
