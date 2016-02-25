@@ -12,9 +12,17 @@ library(docopt)
 
 #options <- docopt(doc)
 
+logPath = "out.log" 
+printToLog <- function(str=""){
+  cat(str,file=logPath, append=TRUE, "\n") 
+}
+
+printToLog("----SCRIPT START----") 
+printToLog(format(Sys.time(), "%a %b %d %X %Y")) 
+
 toPlot=c("N50","NG50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","misassemblies.per.MB")
 toPlotNames=c("N50","NG50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","Misassemblies per MB")
-args = c("/home/belmann/projects/cami_plots/assemblers.tsv","/home/belmann/projects/cami_plots/info2.tsv")
+args = c("/home/belmann/projects/quast-evaluator/assemblers.tsv","/home/belmann/projects/cami_plots/info2.tsv")
 
 #assemblers_path = options$assemblers.tsv 
 assemblers_path = args[1]
@@ -44,10 +52,16 @@ iterInfos <- function(ref, assemblerPath, assemblerName) {
 }
 
 iterAssemblers  <- function(assemblerRow){
-  apply(infos,1,function(ref) iterInfos(ref, assemblerPath=assemblerRow["path"], assemblerName=assemblerRow["assembler"]))
+  assemblerPath = file.path(assemblerRow["path"])
+  if(file.exists(assemblerPath)){
+    apply(infos,1,function(ref) iterInfos(ref, assemblerPath=assemblerRow["path"], assemblerName=assemblerRow["assembler"]))
+  } else {
+    printToLog(sprintf("Directory %s does not exist", assemblerPath)) 
+  }
 }
 
 apply(assemblers, 1, iterAssemblers)
+
 referencePlot <- function(cov, reportName){
   cov$ID <- factor(cov$ID, levels = cov$ID[order(cov$Cov)])
   pdf(reportName, width=11, height=7.6)
@@ -83,3 +97,5 @@ assemblyPlot(toPlot, toPlotNames , fileReport, "coverage.pdf", FALSE)
 assemblyPlot(toPlot, toPlotNames , fileReport, "coverage-facet.pdf", TRUE, height=12)
 assemblyPlot(toPlot, toPlotNames , fileReport, "gc.pdf", facet=FALSE, sortBy="gc")
 assemblyPlot(toPlot, toPlotNames , fileReport, "gc-facet.pdf", facet=TRUE, sortBy="gc", height=12)
+
+printToLog("----SCRIPT END----")
