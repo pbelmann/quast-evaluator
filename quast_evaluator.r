@@ -9,19 +9,14 @@ library(docopt)
 ' -> doc
 
 #options <- docopt(doc)
-print(options)
 
 toPlot=c("N50","NG50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","misassemblies.per.MB")
 toPlotNames=c("N50","NG50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","Misassemblies per MB")
-
-assemblerMQ=c("berserk_blackwell","clever_hypatia","cranky_archimedes","determined_bell","goofy_hawking","high_hodgkin","mad_colden")
-assemblerName=c("berserk_blackwell","clever_hypatia","cranky_archimedes","determined_bell","goofy_hawking","high_hodgkin","mad_colden")
-
 args = c("/home/belmann/projects/cami_plots/assemblers.tsv","/home/belmann/projects/cami_plots/info2.tsv")
 
-assemblers_path = options$assemblers.tsv 
+#assemblers_path = options$assemblers.tsv 
 assemblers_path = args[1]
-info_paths = options$info.tsv
+#info_paths = options$info.tsv
 info_paths = args[2]
 
 options(warn=1)
@@ -31,12 +26,13 @@ assemblers = cbind.data.frame(assemblers)
 infos = cbind.data.frame(infos)
 
 fileReport <- NULL
-iterInfos <- function(ref, assemblerPath) {
+iterInfos <- function(ref, assemblerPath, assemblerName) {
   refPath = ref["path"]
   reportPath = file.path(assemblerPath, refPath, "transposed_report.tsv")
   if(file.exists(reportPath)){
       report = read.delim(reportPath, stringsAsFactors=FALSE)
       report = cbind.data.frame(report, gID=as.factor(ref["ID"]), cov=as.double(ref["Cov"]), gc=as.double(ref["GC"]))
+      report = report[report[, "Assembly"] == assemblerName, ]
       if (!is.null(fileReport)){
         fileReport <<- rbind.fill(fileReport, report)
       }else{
@@ -46,11 +42,10 @@ iterInfos <- function(ref, assemblerPath) {
 }
 
 iterAssemblers  <- function(assemblerRow){
-  apply(infos,1,function(ref) iterInfos(ref,assemblerPath=assemblerRow["path"]))
+  apply(infos,1,function(ref) iterInfos(ref, assemblerPath=assemblerRow["path"], assemblerName=assemblerRow["assembler"]))
 }
 
 apply(assemblers, 1, iterAssemblers)
-#fileReport = fileReport[fileReport[, "Assembly"] %in% assemblerName, ]
 referencePlot <- function(cov, reportName){
   cov$ID <- factor(cov$ID, levels = cov$ID[order(cov$Cov)])
   pdf(reportName, width=11, height=7.6)
