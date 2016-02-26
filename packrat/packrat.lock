@@ -3,6 +3,11 @@ PackratVersion: 0.4.6.1
 RVersion: 3.2.3
 Repos: CRAN=https://cran.rstudio.com/
 
+Package: R6
+Source: CRAN
+Version: 2.1.2
+Hash: c515e41c73294952cbb33ee1c1be5a2d
+
 Package: RColorBrewer
 Source: CRAN
 Version: 1.1-2
@@ -17,6 +22,11 @@ Package: colorspace
 Source: CRAN
 Version: 1.2-6
 Hash: 00bb12245cd975c450cc4a960884fa15
+
+Package: curl
+Source: CRAN
+Version: 0.9.6
+Hash: 21fb53e12f47bff18a2db6ab69bd87a0
 
 Package: dichromat
 Source: CRAN
@@ -40,10 +50,31 @@ Version: 2.0.0
 Hash: 5befb1e7a9c7d0692d6c35fa02a29dbf
 Requires: digest, gtable, plyr, reshape2, scales
 
+Package: ggplus
+Source: github
+Version: 0.1
+Hash: 2750cd662194ceb4942ccc47fc8edb71
+Requires: ggplot2
+GithubRepo: ggplus
+GithubUsername: guiastrennec
+GithubRef: master
+GithubSha1: 2e8e8d80a35466401cea9df6d736f0955d190d7b
+
 Package: gtable
 Source: CRAN
 Version: 0.1.2
 Hash: 38a0f066373a60824cd3ade2362af363
+
+Package: httr
+Source: CRAN
+Version: 1.1.0
+Hash: 27ffb4b4dbb8ac4019126070d66910fc
+Requires: R6, curl, jsonlite, mime, openssl
+
+Package: jsonlite
+Source: CRAN
+Version: 0.9.19
+Hash: 4a983f753b6e88ae0f5a6ac152d8cc32
 
 Package: labeling
 Source: CRAN
@@ -55,11 +86,21 @@ Source: CRAN
 Version: 1.5
 Hash: bdc4d48c3135e8f3b399536ddf160df4
 
+Package: mime
+Source: CRAN
+Version: 0.4
+Hash: b08c52dae92a0a11e64a4deea032ec33
+
 Package: munsell
 Source: CRAN
 Version: 0.4.3
 Hash: f96d896947fcaf9b6d0074002e9f4f9d
 Requires: colorspace
+
+Package: openssl
+Source: CRAN
+Version: 0.9.1
+Hash: 8a4d4c380ac9a71b8a387bb8e586270b
 
 Package: packrat
 Source: CRAN

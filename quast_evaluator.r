@@ -4,6 +4,7 @@ library(grid)
 library(ggplot2)
 library(plyr)
 library(docopt)
+library(ggplus)
 
 'Usage: quast_summarizer.R  <assemblers.tsv>  <info.tsv>  [-ho DIRECTORY] 
 -h --help    
@@ -83,7 +84,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
     p = p + geom_point(aes(colour=factor(Assembly)))
     if(facet){
-      p = p + facet_grid(Assembly ~ .,scales = "free_y")
+      p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6)
     }
     print(p)
   }
