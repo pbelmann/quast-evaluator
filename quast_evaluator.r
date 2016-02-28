@@ -3,65 +3,52 @@
 library(grid)
 library(ggplot2)
 library(plyr)
-library(docopt)
 library(ggplus)
+options(warn=1)
 
-'Usage: quast_summarizer.R  <assemblers.tsv>  <info.tsv>  [-ho DIRECTORY] 
--h --help    
--o DIRECTORY      specify optional output directory [default: ./]
-' -> doc
+toPlot=c("N50","NG50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","misassemblies.per.MB")
+toPlotNames=c("N50","NG50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","Misassemblies per MB")
 
-#options <- docopt(doc)
+init <- function(assemblers_path, info_paths){
+  assemblers <<- read.delim(assemblers_path, header=TRUE, stringsAsFactors=FALSE)
+  infos <<- read.delim(info_paths, header=TRUE, stringsAsFactors=FALSE)
+  assemblers <<- cbind.data.frame(assemblers)
+  infos <<- cbind.data.frame(infos)
+  logPath <<- "out.log" 
+}
 
-logPath = "out.log" 
 printToLog <- function(str=""){
   cat(str,file=logPath, append=TRUE, "\n") 
 }
 
-printToLog("----SCRIPT START----") 
-printToLog(format(Sys.time(), "%a %b %d %X %Y")) 
-
-toPlot=c("N50","NG50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","misassemblies.per.MB")
-toPlotNames=c("N50","NG50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","Misassemblies per MB")
-args = c("/home/belmann/projects/quast-evaluator/assemblers.tsv","/home/belmann/projects/cami_plots/info2.tsv")
-
-#assemblers_path = options$assemblers.tsv 
-assemblers_path = args[1]
-#info_paths = options$info.tsv
-info_paths = args[2]
-
-options(warn=1)
-assemblers = read.delim(assemblers_path, header=TRUE, stringsAsFactors=FALSE)
-infos = read.delim(info_paths, header=TRUE, stringsAsFactors=FALSE)
-assemblers = cbind.data.frame(assemblers)
-infos = cbind.data.frame(infos)
-
-fileReport <- NULL
-iterInfos <- function(ref, assemblerPath, assemblerName) {
-  refPath = ref["path"]
-  reportPath = file.path(assemblerPath, refPath, "transposed_report.tsv")
-  if(file.exists(reportPath)){
-      report = read.delim(reportPath, stringsAsFactors=FALSE)
-      report = cbind.data.frame(report, gID=as.factor(ref["ID"]), cov=as.double(ref["Cov"]), gc=as.double(ref["GC"]))
-      report = report[report[, "Assembly"] == assemblerName, ]
-      if (!is.null(fileReport)){
-        fileReport <<- rbind.fill(fileReport, report)
-      }else{
-        fileReport <<- report
-      }
+prepareData <- function(){
+  fileReport <<- NULL
+  iterInfos <- function(ref, assemblerPath, assemblerName) {
+    refPath = ref["path"]
+    reportPath = file.path(assemblerPath, refPath, "transposed_report.tsv")
+    if(file.exists(reportPath)){
+        report = read.delim(reportPath, stringsAsFactors=FALSE)
+        report = cbind.data.frame(report, gID=as.factor(ref["ID"]), cov=as.double(ref["Cov"]), gc=as.double(ref["GC"]))
+        report = report[report[, "Assembly"] == assemblerName, ]
+        if (exists("fileReport")){
+          fileReport <<- rbind.fill(fileReport, report)
+        } else {
+          fileReport <<- report
+        }
+    }
   }
-}
 
-iterAssemblers  <- function(assemblerRow){
-  assemblerPath = file.path(assemblerRow["path"])
-  if(file.exists(assemblerPath)){
-    apply(infos,1,function(ref) iterInfos(ref, assemblerPath=assemblerRow["path"], assemblerName=assemblerRow["assembler"]))
-  } else {
-    printToLog(sprintf("Directory %s does not exist", assemblerPath)) 
+  iterAssemblers  <- function(assemblerRow){
+    assemblerPath = file.path(assemblerRow["path"])
+    if(file.exists(assemblerPath)){
+      apply(infos,1,function(ref) iterInfos(ref, assemblerPath=assemblerRow["path"], assemblerName=assemblerRow["assembler"]))
+    } else {
+      printToLog(sprintf("Directory %s does not exist", assemblerPath)) 
+    }
   }
+  apply(assemblers, 1, iterAssemblers)
+  fileReport <<- cbind.data.frame(fileReport, misassemblies.per.MB=fileReport$X..misassemblies/(fileReport$Total.length/1000000))
 }
-
-apply(assemblers, 1, iterAssemblers)
 
 referencePlot <- function(cov, reportName){
   cov$ID <- factor(cov$ID, levels = cov$ID[order(cov$Cov)])
@@ -91,12 +78,10 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
   dev.off()
 }
 
-fileReport = cbind.data.frame(fileReport, misassemblies.per.MB=fileReport$X..misassemblies/(fileReport$Total.length/1000000))
-
-referencePlot(infos, "references.pdf")
-assemblyPlot(toPlot, toPlotNames , fileReport, "coverage.pdf", FALSE)
-assemblyPlot(toPlot, toPlotNames , fileReport, "coverage-facet.pdf", TRUE, height=12)
-assemblyPlot(toPlot, toPlotNames , fileReport, "gc.pdf", facet=FALSE, sortBy="gc")
-assemblyPlot(toPlot, toPlotNames , fileReport, "gc-facet.pdf", facet=TRUE, sortBy="gc", height=12)
-
-printToLog("----SCRIPT END----")
+buildPlots <- function(){
+  referencePlot(infos, "references.pdf")
+  assemblyPlot(toPlot, toPlotNames , fileReport, "coverage.pdf", FALSE)
+  assemblyPlot(toPlot, toPlotNames , fileReport, "coverage-facet.pdf", TRUE, height=12)
+  assemblyPlot(toPlot, toPlotNames , fileReport, "gc.pdf", facet=FALSE, sortBy="gc")
+  assemblyPlot(toPlot, toPlotNames , fileReport, "gc-facet.pdf", facet=TRUE, sortBy="gc", height=12)
+}
