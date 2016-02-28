@@ -23,7 +23,7 @@ printToLog(format(Sys.time(), "%a %b %d %X %Y"))
 
 toPlot=c("N50","NG50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","misassemblies.per.MB")
 toPlotNames=c("N50","NG50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","Misassemblies per MB")
-args = c("/home/belmann/projects/quast-evaluator/assemblers.tsv","/home/belmann/projects/cami_plots/info2.tsv")
+args = c("/home/pbelmann/test/low2.tsv","/home/pbelmann/test/info.tsv")
 
 #assemblers_path = options$assemblers.tsv 
 assemblers_path = args[1]
@@ -77,6 +77,7 @@ referencePlot <- function(cov, reportName){
 
 assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov"){
   fileReport$gID <- factor(fileReport$gID, levels = fileReport$gID[order(fileReport$cov)])
+  fileReport = remove_missing(fileReport, vars = toPlot, finite = TRUE)
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
     p = ggplot(fileReport, aes_string(x="gID", color="Assembly", y=toPlot[n]))
@@ -84,7 +85,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
     p = p + geom_point(aes(colour=factor(Assembly)))
     if(facet){
-      p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6)
+      p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6, scales = "free_y")
     }
     print(p)
   }
