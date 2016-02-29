@@ -4,6 +4,7 @@ library(grid)
 library(ggplot2)
 library(plyr)
 library(ggplus)
+library(ggparallel)
 options(warn=1)
 
 toPlot=c("N50","NG50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","misassemblies.per.MB")
@@ -22,32 +23,56 @@ printToLog <- function(str=""){
 }
 
 prepareData <- function(){
-  fileReport <<- NULL
-  iterInfos <- function(ref, assemblerPath, assemblerName) {
+  referenceReport <<- NULL
+  combinedRefReport <<- NULL
+  
+  getInfos <- function(ref, assemblerPath, assemblerName) {
     refPath = ref["path"]
-    reportPath = file.path(assemblerPath, refPath, "transposed_report.tsv")
+    reportPath = file.path(assemblerPath, "runs_per_reference", refPath, "transposed_report.tsv")
     if(file.exists(reportPath)){
         report = read.delim(reportPath, stringsAsFactors=FALSE)
         report = cbind.data.frame(report, gID=as.factor(ref["ID"]), cov=as.double(ref["Cov"]), gc=as.double(ref["GC"]))
         report = report[report[, "Assembly"] == assemblerName, ]
-        if (exists("fileReport")){
-          fileReport <<- rbind.fill(fileReport, report)
+        if (exists("referenceReport")){
+          referenceReport <<- rbind.fill(referenceReport, report)
         } else {
-          fileReport <<- report
+          referenceReport <<- report
         }
     }
   }
 
-  iterAssemblers  <- function(assemblerRow){
+  iterInfos <- function(assemblerRow){
     assemblerPath = file.path(assemblerRow["path"])
     if(file.exists(assemblerPath)){
-      apply(infos,1,function(ref) iterInfos(ref, assemblerPath=assemblerRow["path"], assemblerName=assemblerRow["assembler"]))
+      apply(infos,1,function(ref) getInfos(ref, assemblerPath=assemblerRow["path"], assemblerName=assemblerRow["assembler"]))
     } else {
       printToLog(sprintf("Directory %s does not exist", assemblerPath)) 
     }
   }
+  
+  combinedFileReport <- function(assemblerRow){
+    assemblerPath = file.path(assemblerRow["path"])
+    assemblerName = assemblerRow["assembler"]
+    reportPath = file.path(assemblerPath, "combined_reference" , "transposed_report.tsv")
+    if(file.exists(reportPath)){
+      report = read.delim(reportPath, stringsAsFactors=FALSE)
+      report = cbind.data.frame(report)
+      report = report[report[, "Assembly"] == assemblerName, ]
+      if (exists("combinedRefReport")){
+        combinedRefReport <<- rbind.fill(combinedRefReport, report)
+      } else {
+        combinedRefReport <<- report
+      }
+    }
+  }
+  
+  iterAssemblers  <- function(assemblerRow){
+    iterInfos(assemblerRow)
+    combinedFileReport(assemblerRow)
+  }
+  
   apply(assemblers, 1, iterAssemblers)
-  fileReport <<- cbind.data.frame(fileReport, misassemblies.per.MB=fileReport$X..misassemblies/(fileReport$Total.length/1000000))
+  referenceReport <<- cbind.data.frame(referenceReport, misassemblies.per.MB=referenceReport$X..misassemblies/(referenceReport$Total.length/1000000))
 }
 
 referencePlot <- function(cov, reportName){
@@ -62,11 +87,11 @@ referencePlot <- function(cov, reportName){
   dev.off()
 }
 
-assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov"){
-  fileReport$gID <- factor(fileReport$gID, levels = fileReport$gID[order(fileReport$cov)])
+assemblyPlot <- function(toPlot, toPlotNames, referenceReport, reportName, facet=FALSE, height=8, sortBy="cov"){
+  referenceReport$gID <- factor(referenceReport$gID, levels = referenceReport$gID[order(referenceReport$cov)])
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
-    p = ggplot(fileReport, aes_string(x="gID", color="Assembly", y=toPlot[n]))
+    p = ggplot(referenceReport, aes_string(x="gID", color="Assembly", y=toPlot[n]))
     p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly))
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
     p = p + geom_point(aes(colour=factor(Assembly)))
@@ -78,10 +103,37 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
   dev.off()
 }
 
+parallelCoordinatesPlot <- function(toPlot, toPlotNames, combinedRefReport, reportName, height=8){
+  
+  print("test")
+  write.table(combinedRefReport, "outtest.txt", sep="\t")
+  #ggparcoord(data, columns = 1:ncol(data), groupColumn = NULL,
+  #           scale = "std", scaleSummary = "mean", centerObsID = 1,
+  #           missing = "exclude", order = columns, showPoints = FALSE,
+  #           splineFactor = FALSE, alphaLines = 1, boxplot = FALSE,
+  #           shadeBox = NULL, mapping = NULL, title = "")
+  
+  
+#  referenceReport$gID <- factor(referenceReport$gID, levels = referenceReport$gID[order(referenceReport$cov)])
+#  pdf(reportName, width=11, height=height)
+#  for (n in 1:length(toPlot)){
+#    p = ggplot(referenceReport, aes_string(x="gID", color="Assembly", y=toPlot[n]))
+#    p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly))
+#    p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
+#    p = p + geom_point(aes(colour=factor(Assembly)))
+#    if(facet){
+#      p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6)
+#    }
+#    print(p)
+#  }
+#  dev.off()
+}
+
 buildPlots <- function(){
-  referencePlot(infos, "references.pdf")
-  assemblyPlot(toPlot, toPlotNames , fileReport, "coverage.pdf", FALSE)
-  assemblyPlot(toPlot, toPlotNames , fileReport, "coverage-facet.pdf", TRUE, height=12)
-  assemblyPlot(toPlot, toPlotNames , fileReport, "gc.pdf", facet=FALSE, sortBy="gc")
-  assemblyPlot(toPlot, toPlotNames , fileReport, "gc-facet.pdf", facet=TRUE, sortBy="gc", height=12)
+   referencePlot(infos, "references.pdf")
+   assemblyPlot(toPlot, toPlotNames , referenceReport, "coverage.pdf", FALSE)
+   assemblyPlot(toPlot, toPlotNames , referenceReport, "coverage-facet.pdf", TRUE, height=12)
+   assemblyPlot(toPlot, toPlotNames , referenceReport, "gc.pdf", facet=FALSE, sortBy="gc")
+   assemblyPlot(toPlot, toPlotNames , referenceReport, "gc-facet.pdf", facet=TRUE, sortBy="gc", height=12)
+   parallelCoordinatesPlot(toPlot, toPlotNames , combinedRefReport, "parallel-coordinates.pdf", height=12)
 }
