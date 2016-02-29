@@ -87,8 +87,9 @@ referencePlot <- function(cov, reportName){
   dev.off()
 }
 
-assemblyPlot <- function(toPlot, toPlotNames, referenceReport, reportName, facet=FALSE, height=8, sortBy="cov"){
+assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov"){
   referenceReport$gID <- factor(referenceReport$gID, levels = referenceReport$gID[order(referenceReport$cov)])
+  referenceReport = remove_missing(referenceReport, vars = toPlot, finite = TRUE)
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
     p = ggplot(referenceReport, aes_string(x="gID", color="Assembly", y=toPlot[n]))
@@ -96,7 +97,7 @@ assemblyPlot <- function(toPlot, toPlotNames, referenceReport, reportName, facet
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
     p = p + geom_point(aes(colour=factor(Assembly)))
     if(facet){
-      p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6)
+      p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6, scales = "free_y")
     }
     print(p)
   }
