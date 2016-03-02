@@ -5,6 +5,7 @@ library(ggplot2)
 library(plyr)
 library(ggplus)
 library(ggparallel)
+library(plotly)
 options(warn=1)
 
 toPlot=c("N50","NG50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","misassemblies.per.MB")
@@ -79,14 +80,13 @@ prepareData <- function(){
 
 referencePlot <- function(cov, reportName){
   cov$ID <- factor(cov$ID, levels = cov$ID[order(cov$Cov)])
-  pdf(reportName, width=11, height=7.6)
   p = ggplot(cov, aes(x=ID, y=Cov)) +
     geom_point() +
     theme_bw() + theme(panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank()) +
     theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2)) +
     ylab("Coverage")
-  print(p)
-  dev.off()
+  p <-ggplotly(p)
+  htmlwidgets::saveWidget(as.widget(p), reportName)
 }
 
 assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov"){
@@ -99,7 +99,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
     p = p + geom_point(aes(colour=factor(Assembly)))
     if(facet){
-      p = p + facet_grid(Assembly ~ .,)
+      p = p + facet_grid(Assembly ~ .)
  #     p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6, scales = "free_y")
     }
     print(p)
@@ -132,7 +132,7 @@ parallelCoordinatesPlot <- function(toPlot, toPlotNames, combinedRefReport, repo
 }
 
 buildPlots <- function(){
-   referencePlot(infos, "references.pdf")
+   referencePlot(infos, "references.html")
    assemblyPlot(toPlot, toPlotNames , referenceReport, "coverage.pdf", FALSE)
    assemblyPlot(toPlot, toPlotNames , referenceReport, "coverage-facet.pdf", TRUE, height=40)
    assemblyPlot(toPlot, toPlotNames , referenceReport, "gc.pdf", facet=FALSE, sortBy="gc")
