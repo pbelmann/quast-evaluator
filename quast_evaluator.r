@@ -108,27 +108,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
 }
 
 parallelCoordinatesPlot <- function(toPlot, toPlotNames, combinedRefReport, reportName, height=8){
-  
-  #ggparcoord(data, columns = 1:ncol(data), groupColumn = NULL,
-  #           scale = "std", scaleSummary = "mean", centerObsID = 1,
-  #           missing = "exclude", order = columns, showPoints = FALSE,
-  #           splineFactor = FALSE, alphaLines = 1, boxplot = FALSE,
-  #           shadeBox = NULL, mapping = NULL, title = "")
-  
-  
-#  referenceReport$gID <- factor(referenceReport$gID, levels = referenceReport$gID[order(referenceReport$cov)])
-#  pdf(reportName, width=11, height=height)
-#  for (n in 1:length(toPlot)){
-#    p = ggplot(referenceReport, aes_string(x="gID", color="Assembly", y=toPlot[n]))
-#    p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly))
-#    p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
-#    p = p + geom_point(aes(colour=factor(Assembly)))
-#    if(facet){
-#      p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6)
-#    }
-#    print(p)
-#  }
-#  dev.off()
+  write.table(combinedRefReport, "combined_ref_data.tsv", sep="\t", row.names = FALSE)
 }
 
 buildPlots <- function(){
@@ -141,7 +121,7 @@ buildPlots <- function(){
 }
 
 writeTables <- function(){
-   write.table(combinedRefReport, "combined_ref_data.tsv", sep="\t")
-   write.table(referenceReport, "ref_data.tsv", sep="\t")
+   write.table(combinedRefReport, "combined_ref_data.tsv", sep="\t", row.names = FALSE)
+   write.table(referenceReport, "ref_data.tsv", sep="\t", row.names = FALSE)
 }
 
