@@ -73,6 +73,8 @@ prepareData <- function(){
   
   apply(assemblers, 1, iterAssemblers)
   referenceReport <<- cbind.data.frame(referenceReport, misassemblies.per.MB=referenceReport$X..misassemblies/(referenceReport$Total.length/1000000))
+  referenceReport$gID <- factor(referenceReport$gID, levels = referenceReport$gID[order(referenceReport$cov)])
+  referenceReport <<- referenceReport
 }
 
 referencePlot <- function(cov, reportName){
@@ -88,16 +90,17 @@ referencePlot <- function(cov, reportName){
 }
 
 assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov"){
-  referenceReport$gID <- factor(referenceReport$gID, levels = referenceReport$gID[order(referenceReport$cov)])
-  referenceReport = remove_missing(referenceReport, vars = toPlot, finite = TRUE)
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
-    p = ggplot(referenceReport, aes_string(x="gID", color="Assembly", y=toPlot[n]))
+    localRep = referenceReport
+    #localRep = remove_missing(referenceReport, vars = toPlot[n], finite = TRUE)
+    p = ggplot(localRep, aes_string(x="gID", color="Assembly", y=toPlot[n]))
     p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly))
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
     p = p + geom_point(aes(colour=factor(Assembly)))
     if(facet){
-      p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6, scales = "free_y")
+      p = p + facet_grid(Assembly ~ .,)
+ #     p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6, scales = "free_y")
     }
     print(p)
   }
@@ -133,7 +136,7 @@ parallelCoordinatesPlot <- function(toPlot, toPlotNames, combinedRefReport, repo
 buildPlots <- function(){
    referencePlot(infos, "references.pdf")
    assemblyPlot(toPlot, toPlotNames , referenceReport, "coverage.pdf", FALSE)
-   assemblyPlot(toPlot, toPlotNames , referenceReport, "coverage-facet.pdf", TRUE, height=12)
+   assemblyPlot(toPlot, toPlotNames , referenceReport, "coverage-facet.pdf", TRUE, height=40)
    assemblyPlot(toPlot, toPlotNames , referenceReport, "gc.pdf", facet=FALSE, sortBy="gc")
    assemblyPlot(toPlot, toPlotNames , referenceReport, "gc-facet.pdf", facet=TRUE, sortBy="gc", height=12)
    parallelCoordinatesPlot(toPlot, toPlotNames , combinedRefReport, "parallel-coordinates.pdf", height=12)

@@ -3,6 +3,7 @@ FROM ubuntu:14.04
 ADD packrat /packrat
 ADD quast_evaluator.r /
 ADD .Rprofile /
+ADD quast_evaluator_cli.r /
 
 RUN echo "deb http://ftp5.gwdg.de/pub/misc/cran/bin/linux/ubuntu trusty/"  >> /etc/apt/sources.list
 
