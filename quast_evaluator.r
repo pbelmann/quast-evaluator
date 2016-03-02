@@ -109,8 +109,6 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
 
 parallelCoordinatesPlot <- function(toPlot, toPlotNames, combinedRefReport, reportName, height=8){
   
-  print("test")
-  write.table(combinedRefReport, "outtest.txt", sep="\t")
   #ggparcoord(data, columns = 1:ncol(data), groupColumn = NULL,
   #           scale = "std", scaleSummary = "mean", centerObsID = 1,
   #           missing = "exclude", order = columns, showPoints = FALSE,
@@ -141,3 +139,9 @@ buildPlots <- function(){
    assemblyPlot(toPlot, toPlotNames , referenceReport, "gc-facet.pdf", facet=TRUE, sortBy="gc", height=12)
    parallelCoordinatesPlot(toPlot, toPlotNames , combinedRefReport, "parallel-coordinates.pdf", height=12)
 }
+
+writeTables <- function(){
+   write.table(combinedRefReport, "combined_ref_data.txt", sep="\t")
+   write.table(referenceReport, "ref_data.tsv", sep="\t")
+}
+

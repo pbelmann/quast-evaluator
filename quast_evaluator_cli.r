@@ -22,5 +22,6 @@ printToLog(format(Sys.time(), "%a %b %d %X %Y"))
 
 prepareData()
 buildPlots()
+writeTables()
 
 printToLog("----SCRIPT END----")
