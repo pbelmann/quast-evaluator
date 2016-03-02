@@ -141,7 +141,7 @@ buildPlots <- function(){
 }
 
 writeTables <- function(){
-   write.table(combinedRefReport, "combined_ref_data.txt", sep="\t")
+   write.table(combinedRefReport, "combined_ref_data.tsv", sep="\t")
    write.table(referenceReport, "ref_data.tsv", sep="\t")
 }
 
