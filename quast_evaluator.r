@@ -94,9 +94,10 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
   for (n in 1:length(toPlot)){
     localRep = referenceReport
     #localRep = remove_missing(referenceReport, vars = toPlot[n], finite = TRUE)
-    p = ggplot(localRep, aes_string(x="label", color="Assembly", y=toPlot[n]))
+    p = ggplot(localRep, aes_string(x="gID", color="Assembly", y=toPlot[n]))
     p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly))
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
+    p = p + scale_x_discrete(labels=localRep$label)
     p = p + geom_point(aes(colour=factor(Assembly)))
     if(facet){
       p = p + facet_grid(Assembly ~ .)
