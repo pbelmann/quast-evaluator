@@ -108,20 +108,20 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
   dev.off()
 }
 
-parallelCoordinatesPlot <- function(toPlot, toPlotNames, combinedRefReport, reportName, height=8){
+parallelCoordinatesPlot <- function(combinedRefReport){
   write.table(combinedRefReport, "combined_ref_data.tsv", sep="\t", row.names = FALSE)
 }
 
-buildPlots <- function(){
-   referencePlot(infos, "references.html")
-   assemblyPlot(toPlot, toPlotNames , referenceReport, "coverage.pdf", FALSE)
-   assemblyPlot(toPlot, toPlotNames , referenceReport, "coverage-facet.pdf", TRUE, height=40)
-   assemblyPlot(toPlot, toPlotNames , referenceReport, "gc.pdf", facet=FALSE, sortBy="gc")
-   assemblyPlot(toPlot, toPlotNames , referenceReport, "gc-facet.pdf", facet=TRUE, sortBy="gc", height=12)
-   parallelCoordinatesPlot(toPlot, toPlotNames , combinedRefReport, "parallel-coordinates.pdf", height=12)
+buildPlots <- function(outputPath){
+   referencePlot(infos, file.path(outputPath, "references.html"))
+   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage.pdf" ), FALSE)
+   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"coverage-facet.pdf" ), TRUE, height=40)
+   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc.pdf"), facet=FALSE, sortBy="gc")
+   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc-facet.pdf"), facet=TRUE, sortBy="gc", height=12)
+   parallelCoordinatesPlot(combinedRefReport)
 }
 
-writeTables <- function(){
-   write.table(combinedRefReport, "combined_ref_data.tsv", sep="\t", row.names = FALSE)
-   write.table(referenceReport, "ref_data.tsv", sep="\t", row.names = FALSE)
+writeTables <- function(outputPath){
+   write.table(combinedRefReport, file.path(outputPath, "combined_ref_data.tsv"), sep="\t", row.names = FALSE)
+   write.table(referenceReport, file.path(outputPath, "ref_data.tsv"), sep="\t", row.names = FALSE)
 }
