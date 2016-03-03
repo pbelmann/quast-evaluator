@@ -3,8 +3,6 @@
 library(grid)
 library(ggplot2)
 library(plyr)
-library(ggplus)
-library(ggparallel)
 library(plotly)
 options(warn=1)
 
