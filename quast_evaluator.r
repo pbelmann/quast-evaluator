@@ -32,7 +32,7 @@ prepareData <- function(){
     reportPath = file.path(assemblerPath, "runs_per_reference", refPath, "transposed_report.tsv")
     if(file.exists(reportPath)){
         report = read.delim(reportPath, stringsAsFactors=FALSE)
-        report = cbind.data.frame(report, gID=as.factor(ref["ID"]), cov=as.double(ref["Cov"]), gc=as.double(ref["GC"]))
+        report = cbind.data.frame(report, gID=as.factor(ref["ID"]), label=as.character(ref["label"]), cov=as.double(ref["Cov"]), gc=as.double(ref["GC"]))
         report = report[report[, "Assembly"] == assemblerName, ]
         if (exists("referenceReport")){
           referenceReport <<- rbind.fill(referenceReport, report)
@@ -94,7 +94,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
   for (n in 1:length(toPlot)){
     localRep = referenceReport
     #localRep = remove_missing(referenceReport, vars = toPlot[n], finite = TRUE)
-    p = ggplot(localRep, aes_string(x="gID", color="Assembly", y=toPlot[n]))
+    p = ggplot(localRep, aes_string(x="label", color="Assembly", y=toPlot[n]))
     p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly))
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
     p = p + geom_point(aes(colour=factor(Assembly)))
@@ -124,4 +124,3 @@ writeTables <- function(){
    write.table(combinedRefReport, "combined_ref_data.tsv", sep="\t", row.names = FALSE)
    write.table(referenceReport, "ref_data.tsv", sep="\t", row.names = FALSE)
 }
-
