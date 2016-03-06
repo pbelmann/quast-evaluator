@@ -43,11 +43,21 @@ Source: CRAN
 Version: 0.6.9
 Hash: fd55d5a024f160fc001a5ece1e27782d
 
-Package: ggplot2
+Package: docopt
 Source: CRAN
+Version: 0.4.3.3
+Hash: 1955f5a3d2982e53a6af186793e6e7df
+Requires: stringr
+
+Package: ggplot2
+Source: github
 Version: 2.1.0
-Hash: 50e297b0191179c39c7dcae0eff72b51
+Hash: 8dd0f932d5195f3b9d87f4ca4c1a563c
 Requires: digest, gtable, plyr, reshape2, scales
+GithubRepo: ggplot2
+GithubUsername: hadley
+GithubRef: master
+GithubSha1: 7edcea4b578fd4add169634ef42c51d79095fdaa
 
 Package: gridExtra
 Source: CRAN
@@ -93,6 +103,12 @@ Source: CRAN
 Version: 1.5
 Hash: bdc4d48c3135e8f3b399536ddf160df4
 
+Package: memoise
+Source: CRAN
+Version: 1.0.0
+Hash: 56e7087c3559eb7ba72a9afb349bf896
+Requires: digest
+
 Package: mime
 Source: CRAN
 Version: 0.4
@@ -115,11 +131,15 @@ Version: 0.4.6-1
 Hash: 29eacc43b096c5b1a82c8d54a49b030b
 
 Package: plotly
-Source: CRAN
-Version: 2.0.16
-Hash: d1da2fcfce97913fce2a41fa1e995049
+Source: github
+Version: 2.5.0
+Hash: 896c6b0aa0cbfc10eaa6ffb0c83e2ee9
 Requires: base64enc, digest, ggplot2, htmlwidgets, httr, jsonlite,
     magrittr, plyr, scales, viridis
+GithubRepo: plotly
+GithubUsername: ropensci
+GithubRef: master
+GithubSha1: 63608e55de7e178378e8c12e41b614a48cbac0b3
 
 Package: plyr
 Source: CRAN
@@ -155,6 +175,11 @@ Source: CRAN
 Version: 0.3.2
 Hash: 958172676ae77dc9c9fe26640ee51ff4
 Requires: ggplot2, gridExtra
+
+Package: withr
+Source: CRAN
+Version: 1.0.1
+Hash: e3d37838719e5d66652364e2aefebcee
 
 Package: yaml
 Source: CRAN
