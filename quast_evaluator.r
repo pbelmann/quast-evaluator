@@ -72,8 +72,6 @@ prepareData <- function(){
   
   apply(assemblers, 1, iterAssemblers)
   referenceReport <<- cbind.data.frame(referenceReport, misassemblies.per.MB=referenceReport$X..misassemblies/(referenceReport$Total.length/1000000))
-  referenceReport$gID <- factor(referenceReport$gID, levels = referenceReport$gID[order(referenceReport$cov)])
-  referenceReport <<- referenceReport
 }
 
 referencePlot <- function(cov, reportName){
@@ -88,17 +86,17 @@ referencePlot <- function(cov, reportName){
 }
 
 assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov"){
+  fileReport = fileReport[order(fileReport[sortBy]),]
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
-    localRep = referenceReport
     #localRep = remove_missing(referenceReport, vars = toPlot[n], finite = TRUE)
-    p = ggplot(localRep, aes_string(x="gID", color="Assembly", y=toPlot[n]))
+    p = ggplot(fileReport, aes_string(x="gID", color="Assembly", y=toPlot[n]))
     p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly))
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
-    p = p + scale_x_discrete(labels=localRep$label)
+    p = p + scale_x_discrete(labels=fileReport$label)
     p = p + geom_point(aes(colour=factor(Assembly)))
     if(facet){
-      p = p + facet_grid(Assembly ~ .)
+      p = p + facet_grid(Assembly ~ ., scales = "free_y")
  #     p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6, scales = "free_y")
     }
     print(p)
