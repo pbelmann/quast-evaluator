@@ -80,20 +80,20 @@ referencePlot <- function(cov, reportName){
     geom_point() +
     theme_bw() + theme(panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank()) +
     theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2)) +
-    ylab("Coverage")
+    ylab("Abundance")
   p <-ggplotly(p)
   htmlwidgets::saveWidget(as.widget(p), reportName)
 }
 
 assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov"){
-  fileReport = fileReport[order(fileReport[sortBy]),]
+  fileReport$gID <- factor(fileReport$gID, levels = fileReport$gID[order(fileReport[sortBy])])
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
     #localRep = remove_missing(referenceReport, vars = toPlot[n], finite = TRUE)
     p = ggplot(fileReport, aes_string(x="gID", color="Assembly", y=toPlot[n]))
     p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly))
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
-    p = p + scale_x_discrete(labels=fileReport$label)
+#    p = p + scale_x_discrete(labels=fileReport$label)
     p = p + geom_point(aes(colour=factor(Assembly)))
     if(facet){
       p = p + facet_grid(Assembly ~ ., scales = "free_y")
@@ -104,8 +104,8 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
   dev.off()
 }
 
-parallelCoordinatesPlot <- function(combinedRefReport){
-  write.table(combinedRefReport, "combined_ref_data.tsv", sep="\t", row.names = FALSE)
+parallelCoordinatesPlot <- function(outputPath, combinedRefReport){
+  write.table(combinedRefReport, file.path(outputPath, "combined_ref_data.tsv"), sep="\t", row.names = FALSE)
 }
 
 buildPlots <- function(outputPath){
@@ -113,8 +113,8 @@ buildPlots <- function(outputPath){
    assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage.pdf" ), FALSE)
    assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"coverage-facet.pdf" ), TRUE, height=40)
    assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc.pdf"), facet=FALSE, sortBy="gc")
-   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc-facet.pdf"), facet=TRUE, sortBy="gc", height=12)
-   parallelCoordinatesPlot(combinedRefReport)
+   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc-facet.pdf"), facet=TRUE, sortBy="gc", height=40)
+   parallelCoordinatesPlot(outputPath, combinedRefReport)
 }
 
 writeTables <- function(outputPath){
