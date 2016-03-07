@@ -96,7 +96,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
 #    p = p + scale_x_discrete(labels=fileReport$label)
     p = p + geom_point(aes(colour=factor(Assembly)))
     if(facet){
-      p = p + facet_grid(Assembly ~ ., scales = "free_y")
+      p = p + facet_grid(Assembly ~ .)
  #     p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6, scales = "free_y")
     }
     print(p)
