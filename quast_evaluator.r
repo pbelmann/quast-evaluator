@@ -85,16 +85,18 @@ referencePlot <- function(cov, reportName){
   htmlwidgets::saveWidget(as.widget(p), reportName)
 }
 
-assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov"){
+assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov", se=FALSE, points=TRUE){
   fileReport$gID <- factor(fileReport$gID, levels = fileReport$gID[order(fileReport[sortBy])])
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
     #localRep = remove_missing(referenceReport, vars = toPlot[n], finite = TRUE)
     p = ggplot(fileReport, aes_string(x="gID", color="Assembly", y=toPlot[n]))
-    p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly))
+    p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly), se=FALSE)
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
 #    p = p + scale_x_discrete(labels=fileReport$label)
-    p = p + geom_point(aes(colour=factor(Assembly)))
+    if(points){
+      p = p + geom_point(aes(colour=factor(Assembly)))
+    }
     if(facet){
       p = p + facet_grid(Assembly ~ .)
  #     p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6, scales = "free_y")
@@ -110,9 +112,11 @@ parallelCoordinatesPlot <- function(outputPath, combinedRefReport){
 
 buildPlots <- function(outputPath){
    referencePlot(infos, file.path(outputPath, "references.html"))
-   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage.pdf" ), FALSE)
-   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"coverage-facet.pdf" ), TRUE, height=40)
+   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance.pdf" ), FALSE)
+   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance_no_points.pdf" ), FALSE, se=FALSE, points=FALSE)
+   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"abundance-facet.pdf" ), TRUE, height=40)
    assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc.pdf"), facet=FALSE, sortBy="gc")
+   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc_no_points.pdf"), facet=FALSE, sortBy="gc", se=FALSE, points=FALSE)
    assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc-facet.pdf"), facet=TRUE, sortBy="gc", height=40)
    parallelCoordinatesPlot(outputPath, combinedRefReport)
 }
