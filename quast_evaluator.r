@@ -30,7 +30,7 @@ prepareData <- function(){
     reportPath = file.path(assemblerPath, "runs_per_reference", refPath, "transposed_report.tsv")
     if(file.exists(reportPath)){
         report = read.delim(reportPath, stringsAsFactors=FALSE)
-        report = cbind.data.frame(report, gID=as.factor(ref["ID"]), label=as.character(ref["label"]), cov=as.double(ref["Cov"]), gc=as.double(ref["GC"]))
+        report = cbind.data.frame(report, gID=as.factor(ref["ID"], labels=ref["label"]), labels=as.character(ref["label"]), cov=as.double(ref["Cov"]), gc=as.double(ref["GC"]))
         report = report[report[, "Assembly"] == assemblerName, ]
         if (exists("referenceReport")){
           referenceReport <<- rbind.fill(referenceReport, report)
@@ -85,21 +85,24 @@ referencePlot <- function(cov, reportName){
   htmlwidgets::saveWidget(as.widget(p), reportName)
 }
 
-assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov", se=FALSE, points=TRUE){
+assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov", se=FALSE, points=TRUE, lineTypes=c(rep("solid",40))){
   fileReport$gID <- factor(fileReport$gID, levels = fileReport$gID[order(fileReport[sortBy])])
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
     #localRep = remove_missing(referenceReport, vars = toPlot[n], finite = TRUE)
+    maxCol = max(referenceReport[toPlot[n]], na.rm = TRUE)
+    minCol = min(referenceReport[toPlot[n]], na.rm = TRUE)
+    
     p = ggplot(fileReport, aes_string(x="gID", color="Assembly", y=toPlot[n]))
-    p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly), se=FALSE)
+    p = p + ylim(c(minCol,maxCol))
+    p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly, linetype = Assembly), se=FALSE)
+    p = p + scale_linetype_manual(values = lineTypes)
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
-#    p = p + scale_x_discrete(labels=fileReport$label)
     if(points){
       p = p + geom_point(aes(colour=factor(Assembly)))
     }
     if(facet){
       p = p + facet_grid(Assembly ~ .)
- #     p = facet_multiple(plot = p, facets ="Assembly",  ncol = 1, nrow = 6, scales = "free_y")
     }
     print(p)
   }
@@ -111,14 +114,15 @@ parallelCoordinatesPlot <- function(outputPath, combinedRefReport){
 }
 
 buildPlots <- function(outputPath){
-   referencePlot(infos, file.path(outputPath, "references.html"))
-   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance.pdf" ), FALSE)
-   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance_no_points.pdf" ), FALSE, se=FALSE, points=FALSE)
-   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"abundance-facet.pdf" ), TRUE, height=40)
-   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc.pdf"), facet=FALSE, sortBy="gc")
-   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc_no_points.pdf"), facet=FALSE, sortBy="gc", se=FALSE, points=FALSE)
-   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc-facet.pdf"), facet=TRUE, sortBy="gc", height=40)
-   parallelCoordinatesPlot(outputPath, combinedRefReport)
+  customLines <- c(rbind(rep("solid", 30), rep("dashed", 30), rep("dotted", 30)))
+  referencePlot(infos, file.path(outputPath, "references.html"))
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance.pdf" ), FALSE)
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance_no_points.pdf" ), FALSE, se=FALSE, points=FALSE, lineTypes=lines)
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"abundance-facet.pdf" ), TRUE, height=40)
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc.pdf"), facet=FALSE, sortBy="gc")
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc_no_points.pdf"), facet=FALSE, sortBy="gc", se=FALSE, points=FALSE, lineTypes=customLines)
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc-facet.pdf"), facet=TRUE, sortBy="gc", height=40)
+  parallelCoordinatesPlot(outputPath, combinedRefReport)
 }
 
 writeTables <- function(outputPath){

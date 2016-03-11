@@ -23,10 +23,21 @@ Source: CRAN
 Version: 0.1-3
 Hash: c590d29e555926af053055e23ee79efb
 
+Package: brew
+Source: CRAN
+Version: 1.0-6
+Hash: 931f9972deae0f205e1c78a51f33149b
+
 Package: colorspace
 Source: CRAN
 Version: 1.2-6
 Hash: 00bb12245cd975c450cc4a960884fa15
+
+Package: crayon
+Source: CRAN
+Version: 1.3.1
+Hash: b61d34886cf0f4b4fc4e4f52ea249390
+Requires: memoise
 
 Package: curl
 Source: CRAN
@@ -147,11 +158,22 @@ Version: 1.8.3
 Hash: e38fe93fa50135fac98421abb43bbfea
 Requires: Rcpp
 
+Package: praise
+Source: CRAN
+Version: 1.0.0
+Hash: 77da8f1df873a4b91e5c4a68fe2fb1b6
+
 Package: reshape2
 Source: CRAN
 Version: 1.4.1
 Hash: 55963009094746c3aef64bfbf9eb4731
 Requires: Rcpp, plyr, stringr
+
+Package: roxygen2
+Source: CRAN
+Version: 5.0.1
+Hash: 39ee3aba606f089cb378c4a1cdd6d499
+Requires: Rcpp, brew, digest, stringi, stringr
 
 Package: scales
 Source: CRAN
@@ -169,6 +191,12 @@ Source: CRAN
 Version: 1.0.0
 Hash: 2676dd5f88890910962b733b0f9540e1
 Requires: magrittr, stringi
+
+Package: testthat
+Source: CRAN
+Version: 0.11.0
+Hash: e10882241e569f584fb1f8c19599a13f
+Requires: crayon, digest, praise
 
 Package: viridis
 Source: CRAN
