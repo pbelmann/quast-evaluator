@@ -4,6 +4,7 @@ library(grid)
 library(ggplot2)
 library(plyr)
 library(plotly)
+library(RColorBrewer)
 options(warn=1)
 
 toPlot=c("N50","NG50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","normalized.misassemblies.per.MB","normalized.mismatches.per.100.kbp")
@@ -32,10 +33,24 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
     report = NULL
     if(file.exists(reportPath)){
         report = read.delim(reportPath, stringsAsFactors=FALSE)
-        report = cbind.data.frame(report, gID=as.factor(ref["ID"]), label=as.character(ref["label"]), cov=as.double(ref["Cov"]), gc=as.double(ref["GC"]))
+        report = cbind.data.frame(report, gID=as.factor(ref["ID"]), label=as.character(ref["label"]), refOrder=as.double(ref["order"]), gc=as.double(ref["GC"]))
         report = report[report[, "Assembly"] == assemblerName, ]
     } else {
-        report = data.frame(Assembly=assemblerName, gID=as.factor(ref["ID"]), Genome.fraction....=0 ,label=as.character(ref["label"]), cov=as.double(ref["Cov"]), gc=as.double(ref["GC"]))
+        report = data.frame(Assembly=assemblerName, gID=as.factor(ref["ID"]), Genome.fraction....=0, 
+                            N50=0, 
+                            NG50=0, 
+                            X..contigs=0, 
+                            Total.length=0, 
+                            GC....=0, 
+                            Reference.GC....=0,
+                            label=as.character(ref["label"]), 
+                            refOrder=as.double(ref["order"]), gc=as.double(ref["GC"]))
+#        Duplication.ratio=0,
+#        X..misassemblies=0, 
+#        X..mismatches.per.100.kbp=0, 
+#        normalized.misassemblies.per.MB=0, 
+#        normalized.mismatches.per.100.kbp=0,
+        
     }
     if (exists("referenceReport")){
       referenceReport <<- rbind.fill(referenceReport, report)
@@ -92,9 +107,9 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
   }
 }
 
-referencePlot <- function(cov, reportName){
-  cov$ID <- factor(cov$ID, levels = cov$ID[order(cov$Cov)])
-  p = ggplot(cov, aes(x=ID, y=Cov)) +
+referencePlot <- function(refInfos, reportName){
+  refInfos$ID <- factor(refInfos$ID, levels = refInfos$ID[order(refInfos$refOrder)])
+  p = ggplot(refInfos, aes(x=ID, y=refOrder)) +
     geom_point() +
     theme_bw() + theme(panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank()) +
     theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2)) +
@@ -103,7 +118,7 @@ referencePlot <- function(cov, reportName){
   htmlwidgets::saveWidget(as.widget(p), reportName)
 }
 
-assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="cov", se=FALSE, points=TRUE, lineTypes=c(rep("solid",40)), manualColor=NULL){
+assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="refOrder", se=FALSE, points=TRUE, lineTypes=c(rep("solid",40)), manualColor=NULL){
   fileReport$gID <- factor(fileReport$gID, levels = fileReport$gID[order(fileReport[sortBy])])
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
