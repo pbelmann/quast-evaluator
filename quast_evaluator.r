@@ -29,15 +29,18 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
   getInfos <- function(ref, assemblerPath, assemblerName) {
     refPath = ref["path"]
     reportPath = file.path(assemblerPath, "runs_per_reference", refPath, "transposed_report.tsv")
+    report = NULL
     if(file.exists(reportPath)){
         report = read.delim(reportPath, stringsAsFactors=FALSE)
         report = cbind.data.frame(report, gID=as.factor(ref["ID"]), label=as.character(ref["label"]), cov=as.double(ref["Cov"]), gc=as.double(ref["GC"]))
         report = report[report[, "Assembly"] == assemblerName, ]
-        if (exists("referenceReport")){
-          referenceReport <<- rbind.fill(referenceReport, report)
-        } else {
-          referenceReport <<- report
-        }
+    } else {
+        report = data.frame(Assembly=assemblerName, gID=as.factor(ref["ID"]), Genome.fraction....=0 ,label=as.character(ref["label"]), cov=as.double(ref["Cov"]), gc=as.double(ref["GC"]))
+    }
+    if (exists("referenceReport")){
+      referenceReport <<- rbind.fill(referenceReport, report)
+    } else {
+      referenceReport <<- report
     }
   }
 
