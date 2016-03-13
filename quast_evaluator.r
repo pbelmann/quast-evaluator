@@ -50,7 +50,6 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
 #        X..mismatches.per.100.kbp=0, 
 #        normalized.misassemblies.per.MB=0, 
 #        normalized.mismatches.per.100.kbp=0,
-        
     }
     if (exists("referenceReport")){
       referenceReport <<- rbind.fill(referenceReport, report)
@@ -108,8 +107,8 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
 }
 
 referencePlot <- function(refInfos, reportName){
-  refInfos$ID <- factor(refInfos$ID, levels = refInfos$ID[order(refInfos$refOrder)])
-  p = ggplot(refInfos, aes(x=ID, y=refOrder)) +
+  refInfos$ID <- factor(refInfos$ID, levels = refInfos$ID[order(refInfos$order)])
+  p = ggplot(refInfos, aes(x=ID, y=order)) +
     geom_point() +
     theme_bw() + theme(panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank()) +
     theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2)) +

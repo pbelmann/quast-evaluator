@@ -120,6 +120,11 @@ Version: 1.0.0
 Hash: 56e7087c3559eb7ba72a9afb349bf896
 Requires: digest
 
+Package: mgcv
+Source: CRAN
+Version: 1.8-12
+Hash: bfb86a57b573f144a1cef9f39d9742ee
+
 Package: mime
 Source: CRAN
 Version: 0.4
