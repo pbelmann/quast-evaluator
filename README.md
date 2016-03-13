@@ -34,7 +34,7 @@ where `/home/belmann/projects/quast-evaluator/tests/testthat/data/assembler1` mu
 * info.tsv:
 
 ~~~BASH
-ID    GC    Cov   path  label
+ID    GC    order   path  label
 1030752.gt1kb   66.49   15.414285       1030752.gt1kb   refA
 1030755.gt1kb   62.12   12.66829        1030755.gt1kb   refB
 1030836.gt1kb   41.31   3.1131791       1030836.gt1kb   refC
@@ -44,5 +44,15 @@ ID    GC    Cov   path  label
 where 
   * `path` is a directory inside the `runs_per_reference` directory.
   * `ID` is a uniq identifier
-  * `Cov` is the coverage
+  * `order` is column which defines an reference order (i.e.: coverage, abundance, length, etc ...)
   * `label` is a custom label for the reference 
+
+## Developer Guide
+
+You can run tests with
+
+~~~BASH
+R -e 'devtools::test()'
+~~~
+
+Please use if you want to propose a Pull Request.
