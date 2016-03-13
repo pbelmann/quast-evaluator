@@ -47,6 +47,10 @@ where
   * `order` is column which defines an reference order (i.e.: coverage, abundance, length, etc ...)
   * `label` is a custom label for the reference 
 
+### Example
+
+  See [tests](tests/testthat/test_quast_evaluator.r) for example.
+
 ## Developer Guide
 
 You can run tests with
@@ -55,4 +59,4 @@ You can run tests with
 R -e 'devtools::test()'
 ~~~
 
-Please use if you want to propose a Pull Request.
+Please use this if you want to propose a Pull Request.
