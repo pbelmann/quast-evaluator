@@ -44,6 +44,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
                             GC....=0, 
                             Reference.GC....=0,
                             label=as.character(ref["label"]), 
+                            group=as.character(ref["group"]),
                             refOrder=as.double(ref["order"]), gc=as.double(ref["gc"]))
 #        Duplication.ratio=0,
 #        X..misassemblies=0, 
