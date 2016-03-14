@@ -1,13 +1,10 @@
 machine:
-  pre:
-    - echo "deb http://ftp5.gwdg.de/pub/misc/cran/bin/linux/ubuntu trusty/"  >> /etc/apt/sources.list
-    - sudo apt-get update && sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com E084DAB9 
   services:
     - docker
 
 dependencies:
   pre:
-    - sudo apt-get install -y r-base r-recommended libicu52 libcurl4-openssl-dev pandoc && R -e 'install.packages("packrat" , repos="http://cran.us.r-project.org"); packrat::restore()'
+    - docker build -t quast-evaluator  quast-evaluator
 
 test:
   override:
