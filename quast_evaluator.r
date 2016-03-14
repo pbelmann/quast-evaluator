@@ -33,7 +33,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
     report = NULL
     if(file.exists(reportPath)){
         report = read.delim(reportPath, stringsAsFactors=FALSE)
-        report = cbind.data.frame(report, gid=as.factor(ref["id"]), label=as.character(ref["label"]), refOrder=as.double(ref["order"]), gc=as.double(ref["gc"]))
+        report = cbind.data.frame(report, gid=as.factor(ref["id"]), label=as.character(ref["label"]), refOrder=as.double(ref["order"]), gc=as.double(ref["gc"]), group=as.character(ref["group"]))
         report = report[report[, "Assembly"] == assemblerName, ]
     } else {
         report = data.frame(Assembly=assemblerName, gid=as.factor(ref["id"]), Genome.fraction....=0, 
@@ -127,14 +127,14 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
     
     p = ggplot(fileReport, aes_string(x="gid", color="Assembly", y=toPlot[n]))
     p = p + ylim(c(minCol,maxCol))
-    p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly, linetype = Assembly), se=FALSE)
+    p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly, linetype = Assembly), se=FALSE, fullrange = TRUE)
     p = p + scale_linetype_manual(values = lineTypes)
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
     if(!missing(manualColor)){
       p = p + scale_color_manual(values=manualColor)
     }
     if(points){
-      p = p + geom_point(aes(colour=factor(Assembly)))
+      p = p + geom_point(aes(colour=factor(Assembly), shape = factor(group)))
     }
     if(facet){
       p = p + facet_grid(Assembly ~ .)
@@ -151,7 +151,7 @@ parallelCoordinatesPlot <- function(outputPath, combinedRefReport){
 buildPlots <- function(outputPath){
   ownColor <- sort(rep(brewer.pal(n=6, name="Set1"),3))
   customLines <- c(rbind(rep("solid", 30), rep("dashed", 30), rep("dotted", 30)))
-  referencePlot(infos, file.path(outputPath, "references.html"))
+#  referencePlot(infos, file.path(outputPath, "references.html"))
   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance.pdf" ), FALSE)
   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance_no_points.pdf" ), FALSE, se=FALSE, points=FALSE, lineTypes=customLines, manualColor=ownColor)
   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"abundance-facet.pdf" ), TRUE, height=40)
