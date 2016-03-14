@@ -128,7 +128,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
     
     p = ggplot(fileReport, aes_string(x="gid", color="Assembly", y=toPlot[n]))
     p = p + ylim(c(minCol,maxCol))
-    p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly, linetype = Assembly), se=FALSE, fullrange = TRUE)
+    p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly, linetype = Assembly), se=FALSE)
     p = p + scale_linetype_manual(values = lineTypes)
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
     if(!missing(manualColor)){
