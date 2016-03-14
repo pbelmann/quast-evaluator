@@ -5,12 +5,35 @@ library(ggplot2)
 library(plyr)
 library(plotly)
 library(RColorBrewer)
+library(mgcv)
 options(warn=1)
 
 toPlot=c("N50","NG50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","normalized.misassemblies.per.MB","normalized.mismatches.per.100.kbp")
 toPlotNames=c("N50","NG50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","normalized misassemblies per MB","normalized mismatches per 100 kbp")
 
 logPath <<- "out.log" 
+
+maxScale = list()
+maxScale$N50 = 700000
+maxScale$NG50 = 800000
+maxScale$X..contigs = 3000
+maxScale$Total.length = 6000000
+maxScale$X..misassemblies = 100
+maxScale$Duplication.ratio = 1.5
+maxScale$X..mismatches.per.100.kbp = 3000
+maxScale$normalized.misassemblies.per.MB = 25
+maxScale$normalized.mismatches.per.100.kbp = 1
+
+minScale = list()
+minScale$N50 = 0
+minScale$NG50 = 0
+minScale$X..contigs = 0
+minScale$Total.length = 0
+minScale$X..misassemblies = 0
+minScale$Duplication.ratio = 1
+minScale$X..mismatches.per.100.kbp = 0
+minScale$normalized.misassemblies.per.MB = 0
+minScale$normalized.mismatches.per.100.kbp = 0
 
 init <- function(assemblers_path, info_paths){
   assemblers <<- read.delim(assemblers_path, header=TRUE, stringsAsFactors=FALSE)
@@ -128,14 +151,22 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
     
     p = ggplot(fileReport, aes_string(x="gid", color="Assembly", y=toPlot[n]))
     p = p + ylim(c(minCol,maxCol))
-    p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly, linetype = Assembly), se=FALSE)
+    
+    minPlotScale = minScale[[toPlot[n]]]
+    maxPlotScale = maxScale[[toPlot[n]]]
+    
+    if(!is.null(minPlotScale) && !is.null(maxPlotScale)){
+      p = p + coord_cartesian(ylim = c(minPlotScale, maxPlotScale))
+    }
+    
+    p = p + stat_smooth(method = "gam", formula = y ~ s(x), aes(fill=Assembly, group=Assembly, linetype = Assembly), se=FALSE)
     p = p + scale_linetype_manual(values = lineTypes)
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
     if(!missing(manualColor)){
       p = p + scale_color_manual(values=manualColor)
     }
     if(points){
-      p = p + geom_point(aes(colour=factor(Assembly), shape = factor(group)))
+      p = p + geom_point(aes(colour = factor(Assembly), shape = factor(group)))
     }
     if(facet){
       p = p + facet_grid(Assembly ~ .)
