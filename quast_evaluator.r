@@ -33,10 +33,10 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
     report = NULL
     if(file.exists(reportPath)){
         report = read.delim(reportPath, stringsAsFactors=FALSE)
-        report = cbind.data.frame(report, gID=as.factor(ref["ID"]), label=as.character(ref["label"]), refOrder=as.double(ref["order"]), gc=as.double(ref["GC"]))
+        report = cbind.data.frame(report, gid=as.factor(ref["id"]), label=as.character(ref["label"]), refOrder=as.double(ref["order"]), gc=as.double(ref["gc"]))
         report = report[report[, "Assembly"] == assemblerName, ]
     } else {
-        report = data.frame(Assembly=assemblerName, gID=as.factor(ref["ID"]), Genome.fraction....=0, 
+        report = data.frame(Assembly=assemblerName, gid=as.factor(ref["id"]), Genome.fraction....=0, 
                             N50=0, 
                             NG50=0, 
                             X..contigs=0, 
@@ -44,7 +44,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
                             GC....=0, 
                             Reference.GC....=0,
                             label=as.character(ref["label"]), 
-                            refOrder=as.double(ref["order"]), gc=as.double(ref["GC"]))
+                            refOrder=as.double(ref["order"]), gc=as.double(ref["gc"]))
 #        Duplication.ratio=0,
 #        X..misassemblies=0, 
 #        X..mismatches.per.100.kbp=0, 
@@ -107,8 +107,8 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
 }
 
 referencePlot <- function(refInfos, reportName){
-  refInfos$ID <- factor(refInfos$ID, levels = refInfos$ID[order(refInfos$order)])
-  p = ggplot(refInfos, aes(x=ID, y=order)) +
+  refInfos$id <- factor(refInfos$id, levels = refInfos$id[order(refInfos$order)])
+  p = ggplot(refInfos, aes(x=id, y=order)) +
     geom_point() +
     theme_bw() + theme(panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank()) +
     theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2)) +
@@ -118,14 +118,14 @@ referencePlot <- function(refInfos, reportName){
 }
 
 assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="refOrder", se=FALSE, points=TRUE, lineTypes=c(rep("solid",40)), manualColor=NULL){
-  fileReport$gID <- factor(fileReport$gID, levels = fileReport$gID[order(fileReport[sortBy])])
+  fileReport$gid <- factor(fileReport$gid, levels = fileReport$gid[order(fileReport[sortBy])])
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
 #    fileReport = remove_missing(fileReport, vars = toPlot[n], finite = TRUE)
     maxCol = max(fileReport[toPlot[n]], na.rm = TRUE)
     minCol = min(fileReport[toPlot[n]], na.rm = TRUE)
     
-    p = ggplot(fileReport, aes_string(x="gID", color="Assembly", y=toPlot[n]))
+    p = ggplot(fileReport, aes_string(x="gid", color="Assembly", y=toPlot[n]))
     p = p + ylim(c(minCol,maxCol))
     p = p + stat_smooth(method=loess, span=0.25, aes(fill=Assembly,group=Assembly, linetype = Assembly), se=FALSE)
     p = p + scale_linetype_manual(values = lineTypes)
