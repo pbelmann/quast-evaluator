@@ -61,7 +61,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
   iterInfos <- function(assemblerRow){
     assemblerPath = file.path(assemblerRow["path"])
     if(file.exists(assemblerPath)){
-      apply(infos,1,function(ref) getInfos(ref, assemblerPath=assemblerRow["path"], assemblerName=assemblerRow["assembler"]))
+      apply(infos,1,function(ref) getInfos(ref, assemblerPath=normalizePath(assemblerRow["path"]), assemblerName=assemblerRow["assembler"]))
     } else {
       printToLog(sprintf("Directory %s does not exist", assemblerPath)) 
     }
