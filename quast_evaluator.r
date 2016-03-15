@@ -35,11 +35,15 @@ minScale$X..mismatches.per.100.kbp = 0
 minScale$normalized.misassemblies.per.MB = 0
 minScale$normalized.mismatches.per.100.kbp = 0
 
-init <- function(assemblers_path, info_paths){
-  assemblers <<- read.delim(assemblers_path, header=TRUE, stringsAsFactors=FALSE)
-  infos <<- read.delim(info_paths, header=TRUE, stringsAsFactors=FALSE)
+init <- function(assemblersPath, infoPaths, plotConfPath){
+  assemblers <<- read.delim(assemblersPath, header=TRUE, stringsAsFactors=FALSE)
   assemblers <<- cbind.data.frame(assemblers)
+  infos <<- read.delim(infoPaths, header=TRUE, stringsAsFactors=FALSE)
   infos <<- cbind.data.frame(infos)
+  if(!missing(plotConfPath)){
+    plotConf <<- read.delim(plotConfPath, header=TRUE, stringsAsFactors=FALSE)
+    plotConf <<- cbind.data.frame(plotConf)
+  }
 }
 
 printToLog <- function(str=""){
@@ -50,13 +54,14 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
   referenceReport <<- NULL
   combinedRefReport <<- NULL
   
-  getInfos <- function(ref, assemblerPath, assemblerName) {
+  getInfos <- function(ref, assemblerPath, assemblerName, assemblerGroup) {
     refPath = ref["path"]
     reportPath = file.path(assemblerPath, "runs_per_reference", refPath, "transposed_report.tsv")
     report = NULL
     if(file.exists(reportPath)){
         report = read.delim(reportPath, stringsAsFactors=FALSE)
-        report = cbind.data.frame(report, gid=as.factor(ref["id"]), label=as.character(ref["label"]), refOrder=as.double(ref["order"]), gc=as.double(ref["gc"]), group=as.character(ref["group"]))
+        report = cbind.data.frame(report, gid=as.factor(ref["id"]), label=as.character(ref["label"]), 
+                                  refOrder=as.double(ref["order"]), gc=as.double(ref["gc"]), group=as.character(ref["group"]), assemblerGroup = assemblerGroup)
         report = report[report[, "Assembly"] == assemblerName, ]
     } else {
         report = data.frame(Assembly=assemblerName, gid=as.factor(ref["id"]), Genome.fraction....=0, 
@@ -68,7 +73,9 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
                             Reference.GC....=0,
                             label=as.character(ref["label"]), 
                             group=as.character(ref["group"]),
-                            refOrder=as.double(ref["order"]), gc=as.double(ref["gc"]))
+                            refOrder=as.double(ref["order"]), 
+                            gc=as.double(ref["gc"]),
+                            assemblerGroup = assemblerGroup)
 #        Duplication.ratio=0,
 #        X..misassemblies=0, 
 #        X..mismatches.per.100.kbp=0, 
@@ -85,7 +92,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
   iterInfos <- function(assemblerRow){
     assemblerPath = file.path(assemblerRow["path"])
     if(file.exists(assemblerPath)){
-      apply(infos,1,function(ref) getInfos(ref, assemblerPath=normalizePath(assemblerRow["path"]), assemblerName=assemblerRow["assembler"]))
+      apply(infos,1,function(ref) getInfos(ref, assemblerPath=normalizePath(assemblerRow["path"]), assemblerName=assemblerRow["assembler"], assemblerGroup=assemblerRow["group"]))
     } else {
       printToLog(sprintf("Directory %s does not exist", assemblerPath)) 
     }
@@ -143,6 +150,9 @@ referencePlot <- function(refInfos, reportName){
 
 assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="refOrder", se=FALSE, points=TRUE, lineTypes=c(rep("solid",40)), manualColor=NULL){
   fileReport$gid <- factor(fileReport$gid, levels = fileReport$gid[order(fileReport[sortBy])])
+
+  #fileReport$Assembly <- factor(fileReport$Assembly, levels = c("jolly_euclid_1","angry_newton_2"))
+  
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
 #    fileReport = remove_missing(fileReport, vars = toPlot[n], finite = TRUE)
@@ -162,6 +172,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
     p = p + stat_smooth(method = "gam", formula = y ~ s(x), aes(fill=Assembly, group=Assembly, linetype = Assembly), se=FALSE)
     p = p + scale_linetype_manual(values = lineTypes)
     p = p + theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2))
+    p = p + ylab(toPlotNames[n])
     if(!missing(manualColor)){
       p = p + scale_color_manual(values=manualColor)
     }
@@ -170,7 +181,10 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
     }
     if(facet){
       p = p + facet_grid(Assembly ~ .)
+    #  p <-ggplotly(p)
+    #  htmlwidgets::saveWidget(as.widget(p), reportName)
     }
+    
     print(p)
   }
   dev.off()
