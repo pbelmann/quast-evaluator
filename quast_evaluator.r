@@ -151,8 +151,6 @@ referencePlot <- function(refInfos, reportName){
 assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALSE, height=8, sortBy="refOrder", se=FALSE, points=TRUE, lineTypes=c(rep("solid",40)), manualColor=NULL){
   fileReport$gid <- factor(fileReport$gid, levels = fileReport$gid[order(fileReport[sortBy])])
 
-  #fileReport$Assembly <- factor(fileReport$Assembly, levels = c("jolly_euclid_1","angry_newton_2"))
-  
   pdf(reportName, width=11, height=height)
   for (n in 1:length(toPlot)){
 #    fileReport = remove_missing(fileReport, vars = toPlot[n], finite = TRUE)
@@ -195,6 +193,31 @@ parallelCoordinatesPlot <- function(outputPath, combinedRefReport){
 }
 
 buildPlots <- function(outputPath){
+  #  fileReport$Assembly <- factor(fileReport$Assembly, levels = c(""))
+  
+  ## must be refactored
+  assemblersTable <- table(assemblers$group)
+  lines <- c()
+  colors <- c()
+  levels <- c()
+  assemblerLevels <- c()
+  linetypes <- c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash")
+  linecolors <- brewer.pal(n = length(names(assemblersTable)), name="Set1")
+  index <- 1
+  sapply(names(assemblersTable), function(name){
+    group <- assemblersTable[name]        
+    colors <<- append(colors, rep(linecolors[index], group))
+    lines <<- append(lines, linetypes[1:group])
+    levels <<- append(levels, name)
+    assemblerLevels <<- append(assemblerLevels, assemblers$assembler[assemblers$group==name])
+    index <<- index + 1 
+  })
+  
+  referenceReport$Assembly <- factor(referenceReport$Assembly, levels = assemblerLevels)
+  
+  customLines <- lines
+  ownColor <- colors
+  
   ownColor <- sort(rep(brewer.pal(n=6, name="Set1"),3))
   customLines <- c(rbind(rep("solid", 30), rep("dashed", 30), rep("dotted", 30)))
 #  referencePlot(infos, file.path(outputPath, "references.html"))

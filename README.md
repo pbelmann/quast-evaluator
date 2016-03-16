@@ -21,9 +21,9 @@ where assemblers.tsv and info.tsv must have the following columns:
 * assemblers.tsv:
 
 ~~~BASH
-assembler       path
-jolly_euclid_1  /home/belmann/projects/quast-evaluator/tests/testthat/data/assembler1
-angry_newton_2  /home/belmann/projects/quast-evaluator/tests/testthat/data/assembler2
+assembler       path	group
+jolly_euclid_1  /home/belmann/projects/quast-evaluator/tests/testthat/data/assembler1	1
+angry_newton_2  /home/belmann/projects/quast-evaluator/tests/testthat/data/assembler2	2
 ~~~
 
 where `/home/belmann/projects/quast-evaluator/tests/testthat/data/assembler1` must contain the directories:
