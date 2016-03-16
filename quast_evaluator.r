@@ -218,8 +218,8 @@ buildPlots <- function(outputPath){
   customLines <- lines
   ownColor <- colors
   
-  ownColor <- sort(rep(brewer.pal(n=6, name="Set1"),3))
-  customLines <- c(rbind(rep("solid", 30), rep("dashed", 30), rep("dotted", 30)))
+#  ownColor <- sort(rep(brewer.pal(n=6, name="Set1"),3))
+#  customLines <- c(rbind(rep("solid", 30), rep("dashed", 30), rep("dotted", 30)))
 #  referencePlot(infos, file.path(outputPath, "references.html"))
   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance.pdf" ), FALSE)
   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance_no_points.pdf" ), FALSE, se=FALSE, points=FALSE, lineTypes=customLines, manualColor=ownColor)
