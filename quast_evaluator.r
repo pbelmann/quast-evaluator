@@ -8,7 +8,7 @@ library(RColorBrewer)
 library(mgcv)
 options(warn=1)
 
-toPlot=c("N50","NG50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","normalized.misassemblies.per.MB","normalized.mismatches.per.100.kbp")
+toPlot=c("N50","NGA50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","normalized.misassemblies.per.MB","normalized.mismatches.per.100.kbp")
 toPlotNames=c("N50","NG50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","normalized misassemblies per MB","normalized mismatches per 100 kbp")
 
 logPath <<- "out.log" 
@@ -26,7 +26,7 @@ maxScale$normalized.mismatches.per.100.kbp = 1
 
 minScale = list()
 minScale$N50 = 0
-minScale$NG50 = 0
+minScale$NGA50 = 0
 minScale$X..contigs = 0
 minScale$Total.length = 0
 minScale$X..misassemblies = 0
@@ -63,10 +63,11 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
         report = cbind.data.frame(report, gid=as.factor(ref["id"]), label=as.character(ref["label"]), 
                                   refOrder=as.double(ref["order"]), gc=as.double(ref["gc"]), group=as.character(ref["group"]), assemblerGroup = assemblerGroup)
         report = report[report[, "Assembly"] == assemblerName, ]
+        report$NGA50[report$NGA50 == "-"]  <- 0
     } else {
         report = data.frame(Assembly=assemblerName, gid=as.factor(ref["id"]), Genome.fraction....=0, 
                             N50=0, 
-                            NG50=0, 
+                            NGA50=0, 
                             X..contigs=0, 
                             Total.length=0, 
                             GC....=0, 
