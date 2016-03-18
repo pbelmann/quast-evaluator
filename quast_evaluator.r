@@ -177,6 +177,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
       p = p + scale_color_manual(values=manualColor)
     }
     if(points){
+      p = p + scale_shape_manual(values = c(0, 1, 2, 3, 4, 7, 8, 9, 10, 16, 17, 18,97, 98, 99, 100, 101, 102, 103, 104, 105, 106))
       p = p + geom_point(aes(colour = factor(Assembly), shape = factor(group)))
     }
     if(facet){
@@ -188,6 +189,35 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, facet=FALS
     print(p)
   }
   dev.off()
+}
+
+boxPlot <- function(toPlot, toPlotNames, fileReport, reportName, height=8, flip=FALSE, category = "group"){
+  
+  pdf(reportName, width=11, height=height)
+  for (n in 1:length(toPlot)){
+    p = ggplot(fileReport, aes_string(x=category, fill="group", y=toPlot[n]))
+    p = p + geom_jitter() + geom_boxplot()
+    p = p + theme(axis.text.x = element_text(angle = 90, hjust=1))
+    if(flip){
+      p = p + coord_flip()
+    }
+    print(p)
+  }
+  dev.off()
+  
+}
+
+violinPlot <- function(toPlot, toPlotNames, fileReport, reportName, height=8){
+  
+  pdf(reportName, width=11, height=height)
+  for (n in 1:length(toPlot)){
+    p = ggplot(fileReport, aes_string(x="group", fill="group", y=toPlot[n]))
+    p = p + geom_jitter() +  geom_violin()
+    p = p + theme(axis.text.x = element_text(angle = 90, hjust=1))
+    print(p)
+  }
+  dev.off()
+  
 }
 
 parallelCoordinatesPlot <- function(outputPath, combinedRefReport){
