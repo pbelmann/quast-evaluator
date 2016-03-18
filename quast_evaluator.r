@@ -9,13 +9,13 @@ library(mgcv)
 options(warn=1)
 
 toPlot=c("N50","NGA50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","normalized.misassemblies.per.MB","normalized.mismatches.per.100.kbp")
-toPlotNames=c("N50","NG50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","normalized misassemblies per MB","normalized mismatches per 100 kbp")
+toPlotNames=c("N50","NGA50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","normalized misassemblies per MB","normalized mismatches per 100 kbp")
 
 logPath <<- "out.log" 
 
 maxScale = list()
 maxScale$N50 = 700000
-maxScale$NG50 = 800000
+maxScale$NGA50 = 800000
 maxScale$X..contigs = 3000
 maxScale$Total.length = 6000000
 maxScale$X..misassemblies = 100
@@ -64,6 +64,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
                                   refOrder=as.double(ref["order"]), gc=as.double(ref["gc"]), group=as.character(ref["group"]), assemblerGroup = assemblerGroup)
         report = report[report[, "Assembly"] == assemblerName, ]
         report$NGA50[report$NGA50 == "-"]  <- 0
+        report$NGA50 <- as.numeric(as.character(report$NGA50))
     } else {
         report = data.frame(Assembly=assemblerName, gid=as.factor(ref["id"]), Genome.fraction....=0, 
                             N50=0, 
