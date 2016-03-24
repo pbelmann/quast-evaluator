@@ -1,12 +1,11 @@
 machine:
-  pre:
-    - echo "deb http://ftp5.gwdg.de/pub/misc/cran/bin/linux/ubuntu trusty/"  >> /etc/apt/sources.list
-      
   services:
     - docker
 
 dependencies:
   pre:
+    - echo "deb http://ftp5.gwdg.de/pub/misc/cran/bin/linux/ubuntu trusty/"  >> /etc/apt/sources.list
+     
     - docker build -t quast-evaluator  .
 
 test:
