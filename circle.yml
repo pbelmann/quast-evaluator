@@ -10,8 +10,7 @@ dependencies:
     - mkdir $HOME/R
     - wget http://cran.rstudio.com/src/base/R-3/R-3.2.4.tar.gz
     - tar xvf R-3.2.4.tar.gz
-    - cd R-3.2.4  && ./configure --prefix=$HOME/R
-    - make && make install
+    - cd R-3.2.4  && ./configure --prefix=$HOME/R  && make && make install
     - docker build -t quast-evaluator  .
 
 test:
