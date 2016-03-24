@@ -9,11 +9,12 @@ dependencies:
     - "~/R"
 
   pre:
-    - sudo apt-get install -y wget
+    - sudo apt-get update && sudo apt-get install -y wget
     - mkdir $HOME/R
     - wget http://cran.rstudio.com/src/base/R-3/R-3.2.4.tar.gz
     - tar xvf R-3.2.4.tar.gz
     - cd R-3.2.4  && ./configure --prefix=$HOME/R  && make && make install
+    - sudo apt-get install -y r-base r-recommended libicu52 libcurl4-openssl-dev pandoc && R -e 'install.packages("packrat" , repos="http://cran.us.r-project.org"); packrat::restore()'
       #    - docker build -t quast-evaluator  .
 
 test:
