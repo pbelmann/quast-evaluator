@@ -5,13 +5,16 @@ machine:
     - docker
 
 dependencies:
+  cache_directories:
+    - "~/R"
+
   pre:
     - sudo apt-get install -y wget
     - mkdir $HOME/R
     - wget http://cran.rstudio.com/src/base/R-3/R-3.2.4.tar.gz
     - tar xvf R-3.2.4.tar.gz
     - cd R-3.2.4  && ./configure --prefix=$HOME/R  && make && make install
-    - docker build -t quast-evaluator  .
+      #    - docker build -t quast-evaluator  .
 
 test:
   override:
