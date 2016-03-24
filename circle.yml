@@ -1,6 +1,6 @@
 machine:
   environment:
-    - PATH: "$PATH:$HOME/R/bin"
+    PATH: ${PATH}:${HOME}/R/bin
   services:
     - docker
 
