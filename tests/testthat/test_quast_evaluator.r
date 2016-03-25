@@ -1,6 +1,4 @@
 library(testthat)
-#library(quast.evaluator)
-#source("../../quast_evaluator_cli.r")
 
 context("Quast Evaluator")
 
@@ -11,7 +9,8 @@ test_that("Script loads without an Error.", {
 test_that("Script produces expected output files.", {
   setwd("../..")
   outputDir = "tests/testthat/data/output"
-  cmd=paste("Rscript", "quast_evaluator_cli.r","tests/testthat/data/assemblers.tsv"," tests/testthat/data/info.tsv","-o", outputDir)
+  dir.create(outputDir)
+  cmd = paste("Rscript", "quast_evaluator_cli.r","tests/testthat/data/assemblers.tsv"," tests/testthat/data/info.tsv","-o", outputDir)
   system(cmd)
   
   outputFiles = c("references.html", "abundance.pdf", "abundance_no_points.pdf", "abundance-facet.pdf", "gc.pdf", "gc_no_points.pdf", "gc-facet.pdf")  
