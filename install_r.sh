@@ -19,7 +19,7 @@
 
 set -o nounset                              # Treat unset variables as an error
 
-R_DIR = "$HOME/R"
+R_DIR="$HOME/R"
  
 if [ ! -d $R_DIR ]; then
    mkdir $R_DIR
