@@ -36,11 +36,11 @@ where `/home/belmann/projects/quast-evaluator/tests/testthat/data/assembler1` mu
 * info.tsv:
 
 ~~~BASH
-id    gc    order   path  label	group
-1030752.gt1kb   66.49   15.414285       1030752.gt1kb   refA	strain
-1030755.gt1kb   62.12   12.66829        1030755.gt1kb   refB	strain
-1030836.gt1kb   41.31   3.1131791       1030836.gt1kb   refC	evolved
-1030878.gt1kb   68.33   1.5677500       1030878.gt1kb   refD	evolved
+id    gc    order   path  label	group	length	mapping
+1030752.gt1kb   66.49   15.414285       1030752.gt1kb   refA	strain	1200	43000
+1030755.gt1kb   62.12   12.66829        1030755.gt1kb   refB	strain	2300	89999
+1030836.gt1kb   41.31   3.1131791       1030836.gt1kb   refC	evolved	4500	76666
+1030878.gt1kb   68.33   1.5677500       1030878.gt1kb   refD	evolved	8999	50000
 ~~~
 
 where 
@@ -49,6 +49,7 @@ where
   * `order` is column which defines an reference order (i.e.: coverage, abundance, length, etc ...)
   * `label` is a custom label for the reference 
   * `group` is an identfier which groups different references
+  * `length` is the length of the reference
 
 ### Example
 
