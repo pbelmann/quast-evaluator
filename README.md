@@ -7,7 +7,9 @@
 * [pandoc](http://pandoc.org/) must be installed 
 
 1.Clone this repository with `git clone https://github.com/pbelmann/quast-evaluator.git`
+
 2.Change working directory: `cd quast-evaluator ` 
+
 3.Run `R -e 'install.packages("packrat" , repos="http://cran.us.r-project.org"); packrat::restore()'` 
 
 ## User Guide
@@ -50,7 +52,7 @@ where
 
 ### Example
 
-  See [tests](tests/testthat/test_quast_evaluator.r) for example.
+  See [tests](tests/testthat/test_quast_evaluator.r)
 
 ## Developer Guide
 
