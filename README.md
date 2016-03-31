@@ -36,7 +36,7 @@ where `/home/belmann/projects/quast-evaluator/tests/testthat/data/assembler1` mu
 * info.tsv:
 
 ~~~BASH
-id    gc    order   path  label	group	length	mapping
+id    gc    order   path  label	group	length	mapping	
 1030752.gt1kb   66.49   15.414285       1030752.gt1kb   refA	strain	1200	43000
 1030755.gt1kb   62.12   12.66829        1030755.gt1kb   refB	strain	2300	89999
 1030836.gt1kb   41.31   3.1131791       1030836.gt1kb   refC	evolved	4500	76666
@@ -50,6 +50,7 @@ where
   * `label` is a custom label for the reference 
   * `group` is an identfier which groups different references
   * `length` is the length of the reference
+  * `mapping` how many reads are mapped to the specific reference
 
 ### Example
 
