@@ -61,7 +61,10 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
         report = cbind.data.frame(report, gid=as.factor(ref["id"]), label=as.character(ref["label"]), 
 				  refLength = as.numeric(ref["length"]),
 				  refMapping = as.numeric(ref["mapping"]),
-                                  refOrder=as.double(ref["order"]), gc=as.double(ref["gc"]), group=as.character(ref["group"]), assemblerGroup = assemblerGroup)
+                                  refOrder=as.double(ref["order"]), 
+				                          gc=as.double(ref["gc"]), group=as.character(ref["group"]), 
+				  refGenes=as.character(ref["genes"]),
+				  assemblerGroup = assemblerGroup)
         report = report[report[, "Assembly"] == assemblerName, ]
         report$NGA50[report$NGA50 == "-"]  <- 0
       #  report$X..predicted.genes..unique.[report$X..predicted.genes..unique. == "NA"]  <- 0
@@ -347,6 +350,10 @@ buildPlots <- function(outputPath){
   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc.pdf"), facet=FALSE, sortBy="gc",  customShapes=customShapes, xAxis = xAxis)
   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc_no_points.pdf"), sortBy="gc", xAxis = xAxis, facet=FALSE, se=FALSE, points=FALSE, lineTypes=customLines, manualColor=ownColor)
   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc-facet.pdf"), sortBy="gc", customShapes=customShapes, xAxis = xAxisFacet, ggplotColor="group" ,facet=TRUE, height=40)
+  
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "genes.pdf"), facet=FALSE, sortBy="refGenes",  customShapes=customShapes, xAxis = xAxis)
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "genes_no_points.pdf"), sortBy="refGenes", xAxis = xAxis, facet=FALSE, se=FALSE, points=FALSE, lineTypes=customLines, manualColor=ownColor)
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "genes-facet.pdf"), sortBy="refGenes", customShapes=customShapes, xAxis = xAxisFacet, ggplotColor="group" ,facet=TRUE, height=40)
   
   parallelCoordinatesPlot(outputPath, combinedRefReport)
 }
