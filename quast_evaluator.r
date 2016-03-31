@@ -11,37 +11,14 @@ options(warn=1)
 
 toPlot=c("X..predicted.genes..unique.","N50","NGA50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","normalized.misassemblies.per.MB","normalized.mismatches.per.100.kbp")
 toPlotNames=c("# predicted genes (unique)","N50","NGA50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","normalized misassemblies per MB","normalized mismatches per 100 kbp")
-
 logPath <<- "out.log" 
 
-maxScale = list()
-maxScale$N50 = 800000
-maxScale$NGA50 = 800000
-maxScale$X..contigs = 3000
-maxScale$Total.length = 6000000
-maxScale$X..misassemblies = 100
-maxScale$Duplication.ratio = 1.5
-maxScale$X..mismatches.per.100.kbp = 3000
-maxScale$normalized.misassemblies.per.MB = 150
-maxScale$normalized.mismatches.per.100.kbp = 1.25
-
-minScale = list()
-minScale$N50 = 0
-minScale$NGA50 = 0
-minScale$X..contigs = 0
-minScale$Total.length = 0
-minScale$X..misassemblies = 0
-minScale$Duplication.ratio = 1
-minScale$X..mismatches.per.100.kbp = 0
-minScale$normalized.misassemblies.per.MB = 0
-minScale$normalized.mismatches.per.100.kbp = 0
-
-init <- function(assemblersPath, infoPaths, plotConfPath){
+init <- function(assemblersPath, infoPaths, plotConfPath=NULL){
   assemblers <<- read.delim(assemblersPath, header=TRUE, stringsAsFactors=FALSE)
   assemblers <<- cbind.data.frame(assemblers)
   infos <<- read.delim(infoPaths, header=TRUE, stringsAsFactors=FALSE)
   infos <<- cbind.data.frame(infos)
-  if(!missing(plotConfPath)){
+  if(!is.null(plotConfPath)){
     plotConf <<- read.delim(plotConfPath, header=TRUE, stringsAsFactors=FALSE)
     plotConf <<- cbind.data.frame(plotConf)
   }
@@ -168,6 +145,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
   }
 }
 
+
 referencePlot <- function(refInfos, reportName){
   refInfos$id <- factor(refInfos$id, levels = refInfos$id[order(refInfos$order)])
   p = ggplot(refInfos, aes(x=id, y=order)) +
@@ -203,11 +181,12 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportName, subsets=c(
     p = ggplot(fileReport, aes_string(x=x, color=ggplotColor, y=toPlot[n]))
     p = p + ylim(c(minCol,maxCol))
     
-    minPlotScale = minScale[[toPlot[n]]]
-    maxPlotScale = maxScale[[toPlot[n]]]
-    
-    if(!is.null(minPlotScale) && !is.null(maxPlotScale)){
-      p = p + coord_cartesian(ylim = c(minPlotScale, maxPlotScale))
+    if(exists("plotConf") && toPlot[n] %in% plotConf$plot){
+      minPlotScale = plotConf$min[which(plotConf$plot == toPlot[n])]
+      maxPlotScale = plotConf$max[which(plotConf$plot == toPlot[n])]
+      if(!is.null(minPlotScale) && !is.null(maxPlotScale)){
+          p = p + coord_cartesian(ylim = c(minPlotScale, maxPlotScale))
+      }
     }
 
     for (subsetIndex in 1:length(subsets)){
@@ -365,9 +344,10 @@ buildPlots <- function(outputPath){
   subsetsList, refGroups)
   boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_groups_facet.pdf" ), height=60, facet=TRUE)
 
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc.pdf"), facet=FALSE, sortBy="gc")
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc_no_points.pdf"), facet=FALSE, sortBy="gc", se=FALSE, points=FALSE, lineTypes=customLines, manualColor=ownColor)
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc-facet.pdf"), facet=TRUE, sortBy="gc", height=40)
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc.pdf"), facet=FALSE, sortBy="gc",  customShapes=customShapes, xAxis = xAxis)
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc_no_points.pdf"), sortBy="gc", xAxis = xAxis, facet=FALSE, se=FALSE, points=FALSE, lineTypes=customLines, manualColor=ownColor)
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc-facet.pdf"), sortBy="gc", customShapes=customShapes, xAxis = xAxisFacet, ggplotColor="group" ,facet=TRUE, height=40)
+  
   parallelCoordinatesPlot(outputPath, combinedRefReport)
 }
 
