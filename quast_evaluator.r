@@ -9,8 +9,8 @@ library(mgcv)
 library(functional)
 options(warn=1)
 
-toPlot=c("X..predicted.genes..unique.","N50","NGA50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","normalized.misassemblies.per.MB","normalized.mismatches.per.100.kbp")
-toPlotNames=c("# predicted genes (unique)","N50","NGA50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","normalized misassemblies per MB","normalized mismatches per 100 kbp")
+toPlot=c("genomeFractionNormalized","X..predicted.genes..unique.","N50","NGA50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","normalized.misassemblies.per.MB","normalized.mismatches.per.100.kbp")
+toPlotNames=c("FractionNormalized","# predicted genes (unique)","N50","NGA50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","normalized misassemblies per MB","normalized mismatches per 100 kbp")
 logPath <<- "out.log" 
 
 init <- function(assemblersPath, infoPaths, plotConfPath=NULL){
@@ -144,6 +144,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
       referenceReport <<- cbind.data.frame(referenceReport, normalized.misassemblies.per.MB=referenceReport$X..misassemblies/(referenceReport$Total.length/1000000))
       referenceReport <<- cbind.data.frame(referenceReport, normalized.mismatches.per.100.kbp=referenceReport$X..mismatches.per.100.kbp/referenceReport$Total.length)
       referenceReport <<- cbind.data.frame(referenceReport, cov=(150*referenceReport$refMapping)/(referenceReport$refLength))
+      referenceReport <<- cbind.data.frame(referenceReport, genomeFractionNormalized=(((referenceReport$Genome.fraction.... * referenceReport$Genome.fraction....)/(referenceReport$X..contigs))/10000))
       calculateLook(assemblers = assemblers)
   }
 }
