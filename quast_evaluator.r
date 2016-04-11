@@ -258,6 +258,10 @@ boxPlot <- function(toPlot, toPlotNames, fileReport, reportPath, height=8, facet
     p = p + geom_jitter() + geom_boxplot()
     p = p + theme(axis.text.x = element_text(angle = 90, hjust=1))
 
+    title = c(toPlotNames[n], " with references grouped by ANI score ")
+    p = p + ggtitle(paste(title, collapse = '')) +
+    theme(plot.title = element_text(lineheight=.8))
+    
     if(!missing(fill)){
       p = p + scale_fill_manual(values = manualColor)
     }
