@@ -224,7 +224,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportPath, subsets=c(
       	   p = p + guides(shape = legend , colour = legend, fill = legend, group = legend, linetype = legend)
        }
     }
-    fileName = file.path(reportPath, paste(gsub("%", "", gsub(" ", "_",toPlotNames[n])), ".png", sep = ""))
+    fileName = file.path(reportPath, paste(gsub("\\)","", gsub("\\(","", gsub("#", "", gsub("%", "", gsub(" ", "_",toPlotNames[n]))))), ".png", sep = ""))
     ggsave(fileName, p, width=11, height=height, device = "png")
   }
 }
@@ -265,7 +265,7 @@ boxPlot <- function(toPlot, toPlotNames, fileReport, reportPath, height=8, facet
     if(facet){
       p = p + facet_grid(Assembly ~ .)
     }
-    fileName = file.path(reportPath, paste(gsub("%", "", gsub(" ", "_",toPlotNames[n])), ".png", sep = ""))
+    fileName = file.path(reportPath, paste(gsub("\\)","", gsub("\\(","", gsub("#", "", gsub("%", "", gsub(" ", "_",toPlotNames[n]))))), ".png", sep = ""))
     ggsave(fileName, p, device = "png")
   }
 }
