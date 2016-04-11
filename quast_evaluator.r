@@ -187,6 +187,10 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportPath, subsets=c(
     p = ggplot(fileReport, aes_string(x=x, color=ggplotColor, y=toPlot[n]))
     p = p + ylim(c(minCol,maxCol))
     
+    title = c(toPlotNames[n], " with references sorted by ", sortBy)
+    p = p + ggtitle(paste(title, collapse = '')) +
+    theme(plot.title = element_text(lineheight=.8))
+    
     if(exists("plotConf") && toPlot[n] %in% plotConf$plot){
       minPlotScale = plotConf$min[which(plotConf$plot == toPlot[n])]
       maxPlotScale = plotConf$max[which(plotConf$plot == toPlot[n])]
@@ -220,7 +224,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportPath, subsets=c(
     } else {
        if(points){
            legend = guide_legend(nrow = 4, title.position = "top", title.hjust=0.5)
-	   p = p + geom_point(aes(colour = factor(Assembly), shape = group))
+	         p = p + geom_point(aes(colour = factor(Assembly), shape = group))
       	   p = p + guides(shape = legend , colour = legend, fill = legend, group = legend, linetype = legend)
        }
     }
