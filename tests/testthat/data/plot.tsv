@@ -1,0 +1,10 @@
+plot	min	max
+N50	0	800000
+NGA50	0	800000
+X..contigs	0	3000
+Total.length	0	6000000
+X..misassemblies	0	100
+Duplication.ratio	1	1.5
+X..mismatches.per.100.kbp	0	3000
+normalized.misassemblies.per.MB	0	150
+normalized.mismatches.per.100.kbp	0	1.25

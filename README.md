@@ -14,9 +14,16 @@
 
 ## User Guide
 
+Quast Evaluator has two modes:
+
+### 'new' Mode
+
+This mode lets you collect quast results from different quast output directories.
+
+
 Run 
 
-`Rscript quast_evaluator_cli.r  /path/to/assemblers.tsv   /path/to/info.tsv  -o /path/to/output/directory`
+`Rscript quast_evaluator_cli.r  new  /path/to/assemblers.tsv   /path/to/info.tsv  -o /path/to/output/directory`
 
 where assemblers.tsv and info.tsv must have the following columns:
 
@@ -51,6 +58,20 @@ where
   * `group` is an identfier which groups different references
   * `length` is the length of the reference
   * `mapping` how many reads are mapped to the specific reference
+
+### 'reuse' Mode
+
+This mode lets you reuse tsv files produced by the 'new' mode.
+
+Run 
+
+`Rscript quast_evaluator_cli.r  reuse  /path/to/combined_ref_data.tsv   /path/to/ref_data.tsv  -o /path/to/output/directory`
+
+where combined_ref_data.tsv and ref_data.tsv have the columns stated in these example files: [tests/testthat/data/ref_data.tsv](tests/testthat/data/ref_data.tsv) and [tests/testthat/data/combined_ref_data.tsv](tests/testthat/data/combined_ref_data.tsv) 
+
+### Further Parameters:
+
+  * '-c  /path/to/plot.conf'  This file allows you to define min and max for each plot individually. The [here](tests/testthat/data/plots_conf.tsv) for an example.  
 
 ### Example
 
