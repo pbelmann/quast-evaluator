@@ -84,7 +84,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
                             group=as.character(ref["group"]),
                             abundance=as.double(ref["abundance"]), 
                             gc=as.double(ref["gc"]),
-                            assemblerGroup = assemblerGroup)
+                            assemblerGroup = assemblerGroup, row.names = NULL)
 #        Duplication.ratio=0,
 #        X..misassemblies=0, 
 #        X..mismatches.per.100.kbp=0, 
@@ -256,14 +256,13 @@ boxPlot <- function(toPlot, toPlotNames, fileReport, reportPath, height=8, facet
 
     p = ggplot(data(fileReport), aes)
     p = p + geom_jitter() + geom_boxplot()
-    p = p + theme(axis.text.x = element_text(angle = 90, hjust=1))
+    p = p + theme(axis.text.x = element_text(angle = 90, hjust=1), plot.title = element_text(size=7))
 
     title = c(toPlotNames[n], " with references grouped by ANI score ")
-    p = p + ggtitle(paste(title, collapse = '')) +
-    theme(plot.title = element_text(lineheight=.8))
+    p = p + ggtitle(paste(title, collapse = ''))
     
     if(!missing(fill)){
-      p = p + scale_fill_manual(values = manualColor)
+      p = p + scale_fill_manual(values = manualColor, guide = FALSE)
     }
 
     if(flip){
