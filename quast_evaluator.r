@@ -13,23 +13,19 @@ toPlot=c("genomeFractionNormalized","X..predicted.genes..unique.","N50","NGA50",
 toPlotNames=c("FractionNormalized","# predicted genes (unique)","N50","NGA50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","normalized misassemblies per MB","normalized mismatches per 100 kbp")
 logPath <<- "out.log" 
 
-init <- function(assemblersPath, infoPaths, plotConfPath=NULL){
+init <- function(assemblersPath, infoPaths){
   assemblers <<- read.delim(assemblersPath, header=TRUE, stringsAsFactors=FALSE)
   assemblers <<- cbind.data.frame(assemblers)
   infos <<- read.delim(infoPaths, header=TRUE, stringsAsFactors=FALSE)
   infos <<- cbind.data.frame(infos)
-  if(!is.null(plotConfPath)){
-    plotConf <<- read.delim(plotConfPath, header=TRUE, stringsAsFactors=FALSE)
-    plotConf <<- cbind.data.frame(plotConf)
-  }
 }
 
 printToLog <- function(str=""){
   cat(str,file=logPath, append=TRUE, "\n") 
 }
 
-calculateLook <- function(assemblers){
-  assemblersTable <- table(assemblers$group)
+calculateLook <- function(assemblers, assemblerNameColumn = "assembler", groupColumn = "group"){
+  assemblersTable <- table(assemblers[groupColumn])
   customLines <<- c()
   ownColor <<- c()
   assemblerLevels <<- c()
@@ -41,16 +37,21 @@ calculateLook <- function(assemblers){
     group <- assemblersTable[name]        
     ownColor <<- append(ownColor, rep(linecolors[index], group))
     customLines <<- append(customLines, linetypes[1:group])
-    assemblerLevels <<- append(assemblerLevels, assemblers$assembler[assemblers$group==name])
+    assemblerLevels <<- append(assemblerLevels, assemblers[assemblerNameColumn][assemblers[groupColumn]==name])
     index <<- index + 1 
   })
   
   customShapes <<- c(0, 1, 2, 3, 4, 7, 8, 9, 10, 16, 17, 18,97, 98, 99, 100, 101, 102, 103, 104, 105, 106)
 }
 
-prepareData <- function(existingCombinedRefPath, existingRefPath){
+prepareData <- function(existingCombinedRefPath, existingRefPath, plotConfPath=NULL){
   referenceReport <<- NULL
   combinedRefReport <<- NULL
+  if(!is.null(plotConfPath)){
+    plotConf <<- read.delim(plotConfPath, header=TRUE, stringsAsFactors=FALSE)
+    plotConf <<- cbind.data.frame(plotConf)
+  }
+  
   
   getInfos <- function(ref, assemblerPath, assemblerName, assemblerGroup) {
     refPath = ref["path"]
@@ -111,6 +112,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
     assemblerPath = file.path(assemblerRow["path"])
     assemblerName = assemblerRow["assembler"]
     reportPath = file.path(assemblerPath, "combined_reference" , "transposed_report.tsv")
+    
     if(file.exists(reportPath)){
       report = read.delim(reportPath, stringsAsFactors=FALSE)
       report = cbind.data.frame(report)
@@ -128,16 +130,23 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
     combinedFileReport(assemblerRow)
   }
   
-  
   if(!missing(existingRefPath)){
     refPath = file.path(existingRefPath)
-    refReport = read.delim(refPath, stringsAsFactors=FALSE)
+    refReport = read.table(refPath, stringsAsFactors=TRUE, header = TRUE)
+    refReport$X..predicted.genes..unique. = as.numeric(as.character(refReport$X..predicted.genes..unique.))
     referenceReport <<- cbind.data.frame(refReport)
+
+    if(!exists("infos")){
+      infos <- ddply(cbind(referenceReport), c("gid","group", "label", "refMapping"), head, 1)  
+      assign("infos", infos, envir = .GlobalEnv)
+    }
+    extractedAssemblers = ddply(cbind(referenceReport), c("Assembly","assemblerGroup"), head, 1)  
+    calculateLook(assemblers = extractedAssemblers, assemblerNameColumn = "Assembly", groupColumn = "assemblerGroup")
   }
   
   if(!missing(existingCombinedRefPath)){
     combRefPath = file.path(existingCombinedRefPath)
-    combRefReport = read.delim(combRefPath, stringsAsFactors=FALSE)
+    combRefReport <<- read.table(combRefPath, stringsAsFactors=TRUE, header = TRUE)
     combinedRefReport <<- cbind.data.frame(combRefReport)
   } else {
       apply(assemblers, 1, iterAssemblers)
@@ -145,6 +154,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath){
       referenceReport <<- cbind.data.frame(referenceReport, normalized.mismatches.per.100.kbp=referenceReport$X..mismatches.per.100.kbp/referenceReport$Total.length)
       referenceReport <<- cbind.data.frame(referenceReport, cov=(150*referenceReport$refMapping)/(referenceReport$refLength))
       referenceReport <<- cbind.data.frame(referenceReport, genomeFractionNormalized=(((referenceReport$Genome.fraction.... * referenceReport$Genome.fraction....)/(referenceReport$X..contigs))/10000))
+      
       calculateLook(assemblers = assemblers)
   }
 }
@@ -241,6 +251,9 @@ boxPlot <- function(toPlot, toPlotNames, fileReport, reportPath, height=8, facet
   fileReport$group <- factor(fileReport$group, levels =  names(sort(table(infos$group))))
 
   dir.create(reportPath)
+  
+  print(paste("Building plots in ", reportPath))
+  
   for (n in 1:length(toPlot)){
     
     if(!(toPlot[n] %in% names(fileReport))){
@@ -307,11 +320,9 @@ parallelCoordinatesPlot <- function(outputPath, combinedRefReport){
 }
 
 buildPlots <- function(outputPath){
-
   referenceReport$Assembly <- factor(referenceReport$Assembly, levels = assemblerLevels)
-  
 #  referencePlot(infos, file.path(outputPath, "references.html"))
-
+  
   barPlot(infos, file.path(outputPath, "barplots_groups" ))
   boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_groups" ))
   boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_groups_facet" ), height=60, facet=TRUE)

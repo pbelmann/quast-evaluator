@@ -26,9 +26,9 @@ cli_test_that <- function(description, test_code) {
     cleanup_output_dir(outputDir)
 }
 
-cli_test_that("Script produces expected output files.", {
+cli_test_that("Script produces expected output files.(new mode)", {
 
-  cmd = paste("Rscript", "quast_evaluator_cli.r","tests/testthat/data/assemblers.tsv"," tests/testthat/data/info.tsv","-o", outputDir)
+  cmd = paste("Rscript", "quast_evaluator_cli.r", "new","tests/testthat/data/assemblers.tsv"," tests/testthat/data/info.tsv","-o", outputDir)
 
   if(system(cmd) != 0){
       expect_true(FALSE)
@@ -41,8 +41,7 @@ cli_test_that("Script produces expected output files.", {
 
 
 #cli_test_that("Run scripts with plot configuration", {
-
-#  cmd = paste("Rscript", "quast_evaluator_cli.r",
+#  cmd = paste("Rscript", "quast_evaluator_cli.r","new",
 #	      "tests/testthat/data/assemblers.tsv",
 #	      " tests/testthat/data/info.tsv",
 #	      "-o", outputDir,
