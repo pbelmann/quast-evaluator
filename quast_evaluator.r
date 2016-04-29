@@ -9,7 +9,7 @@ library(mgcv)
 library(functional)
 options(warn=1)
 
-toPlot=c("genomeFractionNormalized","X..predicted.genes..unique.","N50","NGA50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","normalized.misassemblies.per.MB","normalized.mismatches.per.100.kbp")
+toPlot=c("genomeFractionNormalized","X.predicted.genes..unique.","N50","NGA50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","normalized.misassemblies.per.MB","normalized.mismatches.per.100.kbp")
 toPlotNames=c("FractionNormalized","# predicted genes (unique)","N50","NGA50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","normalized misassemblies per MB","normalized mismatches per 100 kbp")
 logPath <<- "out.log" 
 
@@ -64,7 +64,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath, plotConfPath=N
 				  refMapping = as.numeric(ref["mapping"]),
                                   abundance=as.double(ref["abundance"]), 
 				                          gc=as.double(ref["gc"]), group=as.character(ref["group"]), 
-				  refGenes=as.character(ref["genes"]),
+				  refGenes=as.numeric(ref["genes"]),
 				  assemblerGroup = assemblerGroup)
         report = report[report[, "Assembly"] == assemblerName, ]
         report$NGA50[report$NGA50 == "-"]  <- 0
@@ -83,6 +83,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath, plotConfPath=N
                             Reference.GC....=0,
                             label=as.character(ref["label"]), 
                             group=as.character(ref["group"]),
+			    refGenes=as.numeric(ref["genes"]),
                             abundance=as.double(ref["abundance"]), 
                             gc=as.double(ref["gc"]),
                             assemblerGroup = assemblerGroup, row.names = NULL)
@@ -328,9 +329,9 @@ buildPlots <- function(outputPath){
   boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_groups_facet" ), height=60, facet=TRUE)
 #  boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_refs.pdf" ), height=20, fill="group", flip=TRUE, category="gid")
 
-  xAxis = theme(legend.position="bottom", legend.box = "horizontal", axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=1))
+  xAxis = theme(legend.position="bottom", legend.box = "horizontal", axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=10))
 
-  xAxisFacet = theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=1))
+  xAxisFacet = theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=10))
 
   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance" ), customShapes=customShapes, facet=FALSE, xAxis = xAxis)
   assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance_no_points" ), xAxis = xAxis, facet=FALSE, se=FALSE, points=FALSE, lineTypes=customLines, manualColor=ownColor)
