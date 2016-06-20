@@ -14,46 +14,43 @@ create_output_dir <- function(dirPath){
     dir.create(dirPath)
 }
 
-outputDir = "tests/testthat/output"
+output = "tests/testthat/output"
 setwd("../..")
+
+outputDirs = c("coverage_log", "coverage_no_points_log", "coverage-facet_log", "boxplots_groups_facet", "boxplots_groups" , "coverage-facet_multiple_smooth_log", "coverage-facet_multiple_smooth")
 
 cli_test_that <- function(description, test_code) {
 
-    create_output_dir(outputDir)
+    create_output_dir(output)
 
     test_that(description, test_code)
 
-    cleanup_output_dir(outputDir)
+    cleanup_output_dir(output)
 }
 
 cli_test_that("Script produces expected output files.(new mode)", {
 
-  cmd = paste("Rscript", "quast_evaluator_cli.r", "new","tests/testthat/data/assemblers.tsv"," tests/testthat/data/info.tsv","-o", outputDir)
+  cmd = paste("Rscript", "quast_evaluator_cli.r", "new","tests/testthat/data/assemblers.tsv"," tests/testthat/data/info.tsv","-o", output)
 
   if(system(cmd) != 0){
       expect_true(FALSE)
   } 
-  
-  outputFiles = c("abundance", "abundance_no_points", "abundance-facet", "gc", "gc_no_points", "gc-facet")  
 
-  lapply(outputFiles, function(outputFile) expect_true(file.exists(normalizePath(file.path(outputDir, outputFile)))))
+  lapply(outputDirs, function(outputDir) expect_true(file.exists(normalizePath(file.path(output, outputDir)))))
 })
 
 
-#cli_test_that("Run scripts with plot configuration", {
-#  cmd = paste("Rscript", "quast_evaluator_cli.r","new",
-#	      "tests/testthat/data/assemblers.tsv",
-#	      " tests/testthat/data/info.tsv",
-#	      "-o", outputDir,
-#	      "-c", "tests/testthat/data/info.tsv"
-#	      )
-#
-#  if(system(cmd) != 0){
-#      expect_true(FALSE)
-#  } 
-#  
-#  outputDirs = c("abundance", "abundance_no_points", "abundance-facet", "gc", "gc_no_points", "gc-facet")  
-#
-#  lapply(outputFiles, function(outputFile) expect_true(file.exists(normalizePath(file.path(outputDir, outputFile)))))
-#
-#})
+cli_test_that("Run scripts with plot configuration", {
+  cmd = paste("Rscript", "quast_evaluator_cli.r","new",
+	      "tests/testthat/data/assemblers.tsv",
+	      " tests/testthat/data/info.tsv",
+	      "-o", output,
+	      "-c", "tests/testthat/data/info.tsv"
+	      )
+
+  if(system(cmd) != 0){
+      expect_true(FALSE)
+  } 
+
+  lapply(outputDirs, function(outputDir) expect_true(file.exists(normalizePath(file.path(output, outputDir)))))
+})
