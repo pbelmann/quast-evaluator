@@ -17,7 +17,7 @@ create_output_dir <- function(dirPath){
 output = "tests/testthat/output"
 setwd("../..")
 
-outputDirs = c("coverage_log", "coverage_no_points_log", "coverage-facet_log", "boxplots_groups_facet", "boxplots_groups" , "coverage-facet_multiple_smooth_log", "coverage-facet_multiple_smooth")
+outputDirs = c("coverage_log", "coverage_no_points_log", "coverage-facet_log", "boxplots_groups_facet", "boxplots_groups", "coverage-facet-subset_log")
 
 cli_test_that <- function(description, test_code) {
 

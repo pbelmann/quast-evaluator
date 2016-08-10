@@ -24,12 +24,12 @@ printToLog <- function(str=""){
   cat(str,file=logPath, append=TRUE, "\n") 
 }
 
-calculateLook <- function(assemblers, assemblerNameColumn = "assembler", groupColumn = "group"){
+calculateLook <- function(assemblers, assemblerNameColumn = "name", groupColumn = "group"){
   assemblersTable <- table(assemblers[groupColumn])
   customLines <<- c()
   ownColor <<- c()
   assemblerLevels <<- c()
-  linetypes <<- c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash")
+  linetypes <<- c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash", "F1")
   linecolors <<- brewer.pal(n = length(names(assemblersTable)), name="Set1")
   index <- 1
   
@@ -53,7 +53,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath, plotConfPath=N
   }
   
   
-  getInfos <- function(ref, assemblerPath, assemblerName, assemblerGroup) {
+  getInfos <- function(ref, assemblerPath, assemblerName, assemblerGroup, assemblerRealName) {
     refPath = ref["path"]
     reportPath = file.path(assemblerPath, "runs_per_reference", refPath, "transposed_report.tsv")
     report = NULL
@@ -67,11 +67,13 @@ prepareData <- function(existingCombinedRefPath, existingRefPath, plotConfPath=N
 				  refGenes=as.numeric(ref["genes"]),
 				  assemblerGroup = assemblerGroup)
         report = report[report[, "Assembly"] == assemblerName, ]
+	report["assemblerRealName"] <- rep(assemblerRealName,nrow(report))
         report$NGA50[report$NGA50 == "-"]  <- 0
       #  report$X..predicted.genes..unique.[report$X..predicted.genes..unique. == "NA"]  <- 0
         report$NGA50 <- as.numeric(as.character(report$NGA50))
     } else {
         report = data.frame(Assembly=assemblerName, gid=as.factor(ref["id"]), Genome.fraction....=0, 
+			   assemblerRealName=assemblerRealName, 
 			    X..predicted.genes..unique.=0,
                             N50=0, 
                             NGA50=0, 
@@ -103,7 +105,7 @@ prepareData <- function(existingCombinedRefPath, existingRefPath, plotConfPath=N
   iterInfos <- function(assemblerRow){
     assemblerPath = file.path(assemblerRow["path"])
     if(file.exists(assemblerPath)){
-      apply(infos,1,function(ref) getInfos(ref, assemblerPath=normalizePath(assemblerRow["path"]), assemblerName=assemblerRow["assembler"], assemblerGroup=assemblerRow["group"]))
+      apply(infos,1,function(ref) getInfos(ref, assemblerPath=normalizePath(assemblerRow["path"]), assemblerName=assemblerRow["assembler"], assemblerGroup=assemblerRow["group"], assemblerRealName=assemblerRow["name"]))
     } else {
       printToLog(sprintf("Directory %s does not exist", assemblerPath)) 
     }
@@ -172,20 +174,21 @@ referencePlot <- function(refInfos, reportName){
   htmlwidgets::saveWidget(as.widget(p), reportName)
 }
 
-assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportPath, subsets=c(), ggplotColor="Assembly", 
+assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportPath, subsets=c(), ggplotColor="assemblerRealName", 
 			    customShapes = c(),
                             xAxis = theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1)),
                             x="gid" ,facet=FALSE, height=8, sortBy="abundance", log=FALSE, se=FALSE, 
                             points=TRUE, lineTypes=c(rep("solid",40)), manualColor=NULL){
   
-  fileReport$gid <- factor(fileReport$gid, levels = fileReport$gid[order(fileReport[sortBy])])
+#  fileReport <- fileReport[with(fileReport, order(sortBy)),]
   
+
   if(length(subsets) == 0 ){
 	  subsets = c(function(data){ return(data)})
   }
 
   dir.create(reportPath)
-
+  print(paste("Building plots in ", reportPath))
   for (n in 1:length(toPlot)){
 #    fileReport = remove_missing(fileReport, vars = toPlot[n], finite = TRUE)
     
@@ -196,6 +199,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportPath, subsets=c(
     minCol = min(fileReport[toPlot[n]], na.rm = TRUE)
     
     p = ggplot(fileReport, aes_string(x=x, color=ggplotColor, y=toPlot[n]))
+#    p = p + geom_point(aes(size = Reference.length))
     p = p + ylim(c(minCol,maxCol))
     
     title = c(toPlotNames[n], " with references sorted by ", sortBy)
@@ -211,7 +215,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportPath, subsets=c(
     }
 
     for (subsetIndex in 1:length(subsets)){
-       p = p + stat_smooth(data=subsets[[subsetIndex]](fileReport), span = 0.25, aes(fill=Assembly, group=Assembly, linetype = Assembly), se=FALSE)
+       p = p + stat_smooth(data=subsets[[subsetIndex]](fileReport), span = 0.25, aes(fill=assemblerRealName, group=assemblerRealName, linetype = assemblerRealName), se=FALSE)
     }
 
     p = p + scale_linetype_manual(values = lineTypes)
@@ -229,19 +233,23 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportPath, subsets=c(
     }
 
     if(facet){
-      p = p + facet_grid(Assembly ~ .)
-      p = p + guides(linetype=FALSE, fill=FALSE)
+      p = p + facet_grid(assemblerRealName ~ .)
+      p = p + scale_colour_manual(values = c("#7FC97F", "#386CB0", "#BF5B17"))
+      p = p + guides(linetype=FALSE, fill=FALSE, shape=FALSE)
       p = p + geom_point(aes(colour = factor(group), shape = factor(group)))
     } else {
        if(points){
            legend = guide_legend(nrow = 4, title.position = "top", title.hjust=0.5)
-	   p = p + geom_point(aes(colour = factor(Assembly), shape = group))
+	   p = p + geom_point(aes(colour = factor(assemblerRealName), shape = group))
       	   p = p + guides(shape = legend , colour = legend, fill = legend, group = legend, linetype = legend)  
        }
+
        p = p + theme(legend.position="bottom", legend.direction = "horizontal", legend.box = "horizontal")
     }
     fileName = file.path(reportPath, paste(gsub("\\)","", gsub("\\(","", gsub("#", "", gsub("%", "", gsub(" ", "_",toPlotNames[n]))))), ".png", sep = ""))
-    ggsave(fileName, p, width=11, height=height, device = "png")
+    #ggsave(fileName, p, width=11, height=height, device = "png")
+  #  pl <- ggplotly()
+   # htmlwidgets::saveWidget(as.widget(pl), "index.html", selfcontained = TRUE)
   }
 }
 
@@ -250,6 +258,7 @@ reorder_size <- function(x) {
 }
 
 boxPlot <- function(toPlot, toPlotNames, fileReport, reportPath, height=8, facet=FALSE, flip=FALSE, manualColor=NULL, data = function(data){ return(data)}, fill=NULL, category = "group"){
+  #fileReport <- fileReport[with(fileReport, order(group)),]
   fileReport$group <- factor(fileReport$group, levels =  names(sort(table(infos$group))))
 
   dir.create(reportPath)
@@ -287,10 +296,10 @@ boxPlot <- function(toPlot, toPlotNames, fileReport, reportPath, height=8, facet
     p = p + ylab(toPlotNames[n])
 
     if(facet){
-      p = p + facet_grid(Assembly ~ .)
+      p = p + facet_grid(assemblerRealName ~ .)
     }
     fileName = file.path(reportPath, paste(gsub("\\)","", gsub("\\(","", gsub("#", "", gsub("%", "", gsub(" ", "_",toPlotNames[n]))))), ".png", sep = ""))
-    ggsave(fileName, p, device = "png")
+    ggsave(fileName, p, device = "png", height=height)
   }
 }
 
@@ -324,16 +333,15 @@ parallelCoordinatesPlot <- function(outputPath, combinedRefReport){
 }
 
 buildPlots <- function(outputPath){
-  referenceReport$Assembly <- factor(referenceReport$Assembly, levels = assemblerLevels)
+ # referenceReport$Assembly <- factor(referenceReport$Assembly, levels = assemblerLevels)
 #  referencePlot(infos, file.path(outputPath, "references.html"))
  
-  barPlot(infos, file.path(outputPath, "barplots_groups" ))
+ # barPlot(infos, file.path(outputPath, "barplots_groups" ))
   boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_groups" ))
-  boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_groups_facet" ), height=60, facet=TRUE)
+  boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_groups_facet" ), height=40, facet=TRUE)
 #  boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_refs.pdf" ), height=20, fill="group", flip=TRUE, category="gid")
 
   xAxis = theme(legend.position="bottom", legend.box = "horizontal", axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=10))
-
   xAxisFacet = theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=10))
 
 #  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance" ), customShapes=customShapes, facet=FALSE, xAxis = xAxis)
@@ -344,13 +352,14 @@ buildPlots <- function(outputPath){
 #  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance_no_points_log" ),customShapes=customShapes, x="abundance", facet=FALSE, se=FALSE, points=FALSE, log=TRUE, lineTypes=customLines, manualColor=ownColor)
 #  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance-facet_log" ),customShapes=customShapes, xAxis = xAxisFacet, ggplotColor="group", x="abundance", facet=TRUE, log=TRUE, height=40)
 
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage" ), xAxis = xAxis, customShapes=customShapes, sortBy="cov", facet=FALSE)
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage_no_points" ), xAxis = xAxis, customShapes=customShapes, facet=FALSE, se=FALSE, sortBy="cov", points=FALSE, lineTypes=customLines, manualColor=ownColor)
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage-facet" ), xAxis = xAxisFacet, customShapes=customShapes, ggplotColor="group", facet=TRUE, sortBy="cov", height=40)
+#  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage" ), xAxis = xAxis, customShapes=customShapes, sortBy="cov", facet=FALSE)
+#  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage_no_points" ), xAxis = xAxis, customShapes=customShapes, facet=FALSE, se=FALSE, sortBy="cov", points=FALSE, lineTypes=customLines, manualColor=ownColor)
+#  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage-facet" ), xAxis = xAxisFacet, customShapes=customShapes, ggplotColor="group", facet=TRUE, sortBy="cov", height=40)
 
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage_log" ),customShapes=customShapes, x="cov", log=TRUE, sortBy="cov", facet=FALSE)
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage_no_points_log" ),customShapes=customShapes, facet=FALSE, x="cov", se=FALSE, log=TRUE, sortBy="cov", points=FALSE, lineTypes=customLines, manualColor=ownColor)
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"coverage-facet_log" ), customShapes=customShapes, xAxis = xAxisFacet, ggplotColor="group", facet=TRUE, x="cov", log=TRUE, sortBy="cov", height=40)
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage_log" ),customShapes=customShapes,height=11 ,x="cov", log=TRUE, sortBy="cov", facet=FALSE)
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage_no_points_log" ),customShapes=customShapes,height=11, facet=FALSE, x="cov", se=FALSE, log=TRUE, sortBy="cov", points=FALSE, lineTypes=customLines, manualColor=ownColor)
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"coverage-facet_log" ), customShapes=customShapes, xAxis = xAxisFacet, ggplotColor="group", facet=TRUE, x="cov", log=TRUE, sortBy="cov", height=30)
+
 
   refGroups <- names(table(referenceReport$group))
 
@@ -359,19 +368,22 @@ buildPlots <- function(outputPath){
         return(Curry(groupFun, name=name)); 
   }))
  
+
+  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"coverage-facet-subset_log" ), subsets=subsetsList , customShapes=customShapes, xAxis = xAxisFacet, ggplotColor="group", facet=TRUE, x="cov", log=TRUE, sortBy="cov", height=30)
+
 #  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance-facet_multiple_smooth" ), customShapes=customShapes, xAxis = xAxisFacet, subsets=subsetsList, ggplotColor="group" ,facet=TRUE, height=40)
 #  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "abundance-facet_multiple_smooth_log" ), xAxis = xAxisFacet, customShapes=customShapes, subsets=subsetsList, ggplotColor="group", x="abundance", facet=TRUE, log=TRUE, height=40)
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage-facet_multiple_smooth" ), xAxis = xAxisFacet, customShapes=customShapes, subsets=subsetsList, ggplotColor="group", facet=TRUE, sortBy="cov", height=40)
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage-facet_multiple_smooth_log" ), xAxis = xAxisFacet, customShapes=customShapes, subsets=subsetsList, ggplotColor="group", facet=TRUE, x="cov", log=TRUE, sortBy="cov", height=40)
+#  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage-facet_multiple_smooth" ), xAxis = xAxisFacet, customShapes=customShapes, subsets=subsetsList, ggplotColor="group", facet=TRUE, sortBy="cov", height=40)
+#c  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage-facet_multiple_smooth_log" ), xAxis = xAxisFacet, customShapes=customShapes, subsets=subsetsList, ggplotColor="group", facet=TRUE, x="cov", log=TRUE, sortBy="cov", height=40)
   mapply(function(subsetFunc,i){ 
      pdfName <- paste(paste("boxplots_assemblers", as.character(i), sep="_"), "pdf", sep=".")
-     boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, pdfName), data = subsetFunc, flip = TRUE, fill = "Assembly", 
-             manualColor = ownColor, category = "Assembly") 
+     boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, pdfName), data = subsetFunc, flip = TRUE, fill = "assemblerRealName", 
+             manualColor = ownColor, category = "assemblerRealName") 
   }, 
   subsetsList, refGroups)
 
-  boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_assemblers_all_groups"), flip = TRUE, fill = "Assembly", manualColor = ownColor, category = "Assembly") 
-  boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_groups_facet" ), height=60, facet=TRUE)
+#  boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_assemblers_all_groups"), flip = TRUE, fill = "Assembly", manualColor = ownColor, category = "Assembly") 
+#c  boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_groups_facet" ), height=60, facet=TRUE)
 
 #  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc"), facet=FALSE, sortBy="gc",  customShapes=customShapes, xAxis = xAxis)
 #  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "gc_no_points"), sortBy="gc", xAxis = xAxis, facet=FALSE, se=FALSE, points=FALSE, lineTypes=customLines, manualColor=ownColor)
