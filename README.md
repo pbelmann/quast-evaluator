@@ -4,7 +4,7 @@
 
 # Install
 
-**[Pandoc](http://pandoc.org/) must be installed**
+**[Pandoc](http://pandoc.org/) (version > 1.17)  must be installed**
 
 1.Clone this repository with `git clone https://github.com/pbelmann/quast-evaluator.git`
 
