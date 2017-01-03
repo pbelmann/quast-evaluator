@@ -1,14 +1,15 @@
 #!/usr/bin/Rscript
 
 library(docopt)
+options(warn=1)
 
 source("quast_evaluator.r")
 
-'Usage: 
-  quast_evaluator.r new <assemblers.tsv>  <info.tsv> -o DIRECTORY [-c FILE] [-h] 
-  quast_evaluator.r reuse <combinedRef.tsv> <ref.tsv> -o DIRECTORY [-c FILE] [-h] 
+'Usage:
+  quast_evaluator_cli.r new <assemblers.tsv>  <info.tsv> -o DIRECTORY [-c FILE] [-h]
+  quast_evaluator_cli.r reuse <combinedRef.tsv> <ref.tsv> -o DIRECTORY [-c FILE] [-h]
 
--h --help    
+-h --help
 -o DIRECTORY      specify optional output directory [default: ./]
 -c FILE           Plot configuration tsv file. The following columns are allowed: plot (name of the plot), min (Minimum plot scale) and max (Maximum plot scale).
 ' -> doc
@@ -28,16 +29,17 @@ if(newModus){
    plotConfPath = normalizePath(plotConfPath)
  }
 
- init(assemblersPath, infoPaths) 
+ # initialize dataframes
+ init(assemblersPath, infoPaths)
 
- printToLog("----SCRIPT START----") 
- printToLog(format(Sys.time(), "%a %b %d %X %Y")) 
-
+ # read in additional the data
  prepareData(plotConfPath = plotConfPath)
- buildPlots(outputPath)
- writeTables(outputPath)
 
- printToLog("----SCRIPT END----")
+ # build the plots
+ buildPlots(outputPath)
+
+ # export the tables
+ writeTables(outputPath)
 }
 
 reuseModus = options[["reuse"]]
@@ -45,17 +47,16 @@ reuseModus = options[["reuse"]]
 if(reuseModus){
   combinedRefPath = normalizePath(options$combinedRef.tsv)
   refPath = normalizePath(options$ref.tsv)
-  
+
   if(!is.null(plotConfPath)){
     plotConfPath = normalizePath(plotConfPath)
   }
-  
-  printToLog("----SCRIPT START----") 
-  printToLog(format(Sys.time(), "%a %b %d %X %Y")) 
-  
+  # prepare the data
   prepareData(existingCombinedRefPath = combinedRefPath, existingRefPath = refPath, plotConfPath = plotConfPath)
+
+  # build the plots
   buildPlots(outputPath)
+
+  # export the tables
   writeTables(outputPath)
-  
-  printToLog("----SCRIPT END----")
 }

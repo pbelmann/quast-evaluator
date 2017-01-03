@@ -1,4 +1,4 @@
-#!/usr/bin/Rscript
+# !/usr/bin/Rscript
 
 library(grid)
 library(ggplot2)
@@ -6,94 +6,113 @@ library(plyr)
 library(plotly)
 library(RColorBrewer)
 library(mgcv)
+library(MASS)
 library(functional)
+library(htmlwidgets)
+library(parcoords)
 options(warn=1)
 
-toPlot=c("genomeFractionNormalized","X.predicted.genes..unique.","N50","NGA50","X..contigs","Total.length","X..misassemblies","Genome.fraction....","Duplication.ratio","GC....","Reference.GC....","X..mismatches.per.100.kbp","normalized.misassemblies.per.MB","normalized.mismatches.per.100.kbp")
-toPlotNames=c("FractionNormalized","# predicted genes (unique)","N50","NGA50","# contigs","Total length","# misassemblies","Genome fraction (%)","Duplication ratio","GC","ref GC","# mismatches per 100 kbp","normalized misassemblies per MB","normalized mismatches per 100 kbp")
-logPath <<- "out.log" 
+# Categories for which the plots are build
+toPlot=c("Genome.fraction....")
+toPlotNames=c("Genome fraction (%)")
+
+logPath <<- "out.log"
 
 init <- function(assemblersPath, infoPaths){
-  assemblers <<- read.delim(assemblersPath, header=TRUE, stringsAsFactors=FALSE)
-  assemblers <<- cbind.data.frame(assemblers)
-  infos <<- read.delim(infoPaths, header=TRUE, stringsAsFactors=FALSE)
-  infos <<- cbind.data.frame(infos)
+  # Initializes dataframes used in other functions
+  #
+  # Args:
+  #  assemblerPath: path to a file listing assemblers that were provided to QUAST
+  #  infoPaths: path to a file listing references that were provided to QUAST
+  #
+  assemblers <<- cbind.data.frame(read.delim(assemblersPath, header=TRUE, stringsAsFactors=FALSE))
+  infos <<- cbind.data.frame(read.delim(infoPaths, header=TRUE, stringsAsFactors=FALSE))
 }
 
 printToLog <- function(str=""){
-  cat(str,file=logPath, append=TRUE, "\n") 
+  cat(str,file=logPath, append=TRUE, "\n")
 }
 
 calculateLook <- function(assemblers, assemblerNameColumn = "name", groupColumn = "group"){
+  # Computes the colors and line shapes of lines for consistent use in all boxplots and line plots
+  #
+  # Args:
+  #  assemblers: assemblers dataframe
+  #  assemblerNameColumn: column with name of the assemblers
+  #  groupColumn: column with the group identifier of an assembler
+  #
   assemblersTable <- table(assemblers[groupColumn])
   customLines <<- c()
   ownColor <<- c()
   assemblerLevels <<- c()
   linetypes <<- c("solid", "dashed", "dotted", "dotdash", "longdash", "twodash", "F1")
-  linecolors <<- brewer.pal(n = length(names(assemblersTable)), name="Set1")
+  linecolors <<- c("#66C2A5", "#FC8D62", "#8DA0CB", "#A6D854", "#FFD92F", "#E5C494", "#B3B3B3")
   index <- 1
-  
+
   sapply(names(assemblersTable), function(name){
-    group <- assemblersTable[name]        
+    group <- assemblersTable[name]
     ownColor <<- append(ownColor, rep(linecolors[index], group))
     customLines <<- append(customLines, linetypes[1:group])
     assemblerLevels <<- append(assemblerLevels, assemblers[assemblerNameColumn][assemblers[groupColumn]==name])
-    index <<- index + 1 
+    index <<- index + 1
   })
-  
+
   customShapes <<- c(0, 1, 2, 3, 4, 7, 8, 9, 10, 16, 17, 18, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106)
 }
 
 prepareData <- function(existingCombinedRefPath, existingRefPath, plotConfPath=NULL){
+  # This function prepares the dataframes used in all plot functions below.
+  # It prepares two dataframes:
+  # - combinedRef dataframe with combined (general assembly) metrics for each assembler
+  # - refPath dataframe with metrics for each reference independently
+  # If these dataframes were already computed and exported to a file then they can be provided to this function.
+  #
+  # Args:
+  #  existingCombinedRefPath: path to an exported combined references dataframe
+  #  existingRefPath: path to an exported references dataframe
+  #  plotConfPath: path to a file describing the configuration of a plot
+  #
   referenceReport <<- NULL
   combinedRefReport <<- NULL
+  contigsReport <<- NULL
   if(!is.null(plotConfPath)){
     plotConf <<- read.delim(plotConfPath, header=TRUE, stringsAsFactors=FALSE)
     plotConf <<- cbind.data.frame(plotConf)
   }
-  
-  
+
   getInfos <- function(ref, assemblerPath, assemblerName, assemblerGroup, assemblerRealName) {
     refPath = ref["path"]
     reportPath = file.path(assemblerPath, "runs_per_reference", refPath, "transposed_report.tsv")
     report = NULL
+
+    #if quast reference folder exists, it will be parsed otherwise default values will be set
     if(file.exists(reportPath)){
+
         report = read.delim(reportPath, stringsAsFactors=FALSE)
-        report = cbind.data.frame(report, gid=as.factor(ref["id"]), label=as.character(ref["label"]), 
+        report = cbind.data.frame(report, gid=as.factor(ref["id"]),
 				  refLength = as.numeric(ref["length"]),
 				  refMapping = as.numeric(ref["mapping"]),
-                                  abundance=as.double(ref["abundance"]), 
-				                          gc=as.double(ref["gc"]), group=as.character(ref["group"]), 
-				  refGenes=as.numeric(ref["genes"]),
-				  assemblerGroup = assemblerGroup)
+                                  group=as.character(ref["group"]),
+				  assemblerGroup = assemblerGroup, row.names=NULL)
+
         report = report[report[, "Assembly"] == assemblerName, ]
-	report["assemblerRealName"] <- rep(assemblerRealName,nrow(report))
+	      report["assemblerRealName"] <- rep(assemblerRealName,nrow(report))
         report$NGA50[report$NGA50 == "-"]  <- 0
-      #  report$X..predicted.genes..unique.[report$X..predicted.genes..unique. == "NA"]  <- 0
         report$NGA50 <- as.numeric(as.character(report$NGA50))
     } else {
-        report = data.frame(Assembly=assemblerName, gid=as.factor(ref["id"]), Genome.fraction....=0, 
-			   assemblerRealName=assemblerRealName, 
+        report = data.frame(Assembly=assemblerName, gid=as.factor(ref["id"]), Genome.fraction....=0,
+			    assemblerRealName=assemblerRealName,
 			    X..predicted.genes..unique.=0,
-                            N50=0, 
-                            NGA50=0, 
-                            X..contigs=0, 
-                            Total.length=0, 
-                            GC....=0, 
+                            N50=0,
+                            NGA50=0,
+                            X..contigs=0,
+                            Total.length=0,
+                            GC....=0,
 			    refMapping = as.numeric(ref["mapping"]),
 			    refLength = as.numeric(ref["length"]),
                             Reference.GC....=0,
-                            label=as.character(ref["label"]), 
                             group=as.character(ref["group"]),
-			    refGenes=as.numeric(ref["genes"]),
-                            abundance=as.double(ref["abundance"]), 
-                            gc=as.double(ref["gc"]),
                             assemblerGroup = assemblerGroup, row.names = NULL)
-#        Duplication.ratio=0,
-#        X..misassemblies=0, 
-#        X..mismatches.per.100.kbp=0, 
-#        normalized.misassemblies.per.MB=0, 
-#        normalized.mismatches.per.100.kbp=0,
     }
     if (exists("referenceReport")){
       referenceReport <<- rbind.fill(referenceReport, report)
@@ -104,22 +123,27 @@ prepareData <- function(existingCombinedRefPath, existingRefPath, plotConfPath=N
 
   iterInfos <- function(assemblerRow){
     assemblerPath = file.path(assemblerRow["path"])
+    contigsReport <<- NULL
     if(file.exists(assemblerPath)){
       apply(infos,1,function(ref) getInfos(ref, assemblerPath=normalizePath(assemblerRow["path"]), assemblerName=assemblerRow["assembler"], assemblerGroup=assemblerRow["group"], assemblerRealName=assemblerRow["name"]))
     } else {
-      printToLog(sprintf("Directory %s does not exist", assemblerPath)) 
+      printToLog(sprintf("Directory %s does not exist", assemblerPath))
     }
   }
-  
+
   combinedFileReport <- function(assemblerRow){
     assemblerPath = file.path(assemblerRow["path"])
     assemblerName = assemblerRow["assembler"]
     reportPath = file.path(assemblerPath, "combined_reference" , "transposed_report.tsv")
-    
+
+    print(assemblerName)
+    print(reportPath)
     if(file.exists(reportPath)){
+    print("exists")
       report = read.delim(reportPath, stringsAsFactors=FALSE)
       report = cbind.data.frame(report)
       report = report[report[, "Assembly"] == assemblerName, ]
+      report["name"] <- rep(assemblerRow["name"], nrow(report))
       if (exists("combinedRefReport")){
         combinedRefReport <<- rbind.fill(combinedRefReport, report)
       } else {
@@ -127,85 +151,85 @@ prepareData <- function(existingCombinedRefPath, existingRefPath, plotConfPath=N
       }
     }
   }
-  
+
   iterAssemblers  <- function(assemblerRow){
+    print(assemblerRow)
     iterInfos(assemblerRow)
     combinedFileReport(assemblerRow)
   }
-  
+
   if(!missing(existingRefPath)){
     refPath = file.path(existingRefPath)
     refReport = read.table(refPath, stringsAsFactors=TRUE, header = TRUE)
-    refReport$X..predicted.genes..unique. = as.numeric(as.character(refReport$X..predicted.genes..unique.))
     referenceReport <<- cbind.data.frame(refReport)
 
     if(!exists("infos")){
-      infos <- ddply(cbind(referenceReport), c("gid","group", "label", "refMapping"), head, 1)  
+      infos <- ddply(cbind(referenceReport), c("gid","group", "refMapping"), head, 1)
       assign("infos", infos, envir = .GlobalEnv)
     }
-    extractedAssemblers = ddply(cbind(referenceReport), c("Assembly","assemblerGroup"), head, 1)  
-    calculateLook(assemblers = extractedAssemblers, assemblerNameColumn = "Assembly", groupColumn = "assemblerGroup")
+    extractedAssemblers = ddply(cbind(referenceReport), c("Assembly","assemblerGroup"), head, 1)
+    calculateLook(assemblers = extractedAssemblers, assemblerNameColumn = "assemblerRealName", groupColumn = "assemblerGroup")
   }
-  
+
   if(!missing(existingCombinedRefPath)){
     combRefPath = file.path(existingCombinedRefPath)
     combRefReport <<- read.table(combRefPath, stringsAsFactors=TRUE, header = TRUE)
     combinedRefReport <<- cbind.data.frame(combRefReport)
   } else {
-      apply(assemblers, 1, iterAssemblers)
-      referenceReport <<- cbind.data.frame(referenceReport, normalized.misassemblies.per.MB=referenceReport$X..misassemblies/(referenceReport$Total.length/1000000))
-      referenceReport <<- cbind.data.frame(referenceReport, normalized.mismatches.per.100.kbp=referenceReport$X..mismatches.per.100.kbp/referenceReport$Total.length)
-      referenceReport <<- cbind.data.frame(referenceReport, cov=(150*referenceReport$refMapping)/(referenceReport$refLength))
-      referenceReport <<- cbind.data.frame(referenceReport, genomeFractionNormalized=(((referenceReport$Genome.fraction.... * referenceReport$Genome.fraction....)/(referenceReport$X..contigs))/10000))
-      
-      calculateLook(assemblers = assemblers)
+    print(assemblers)
+    apply(assemblers, 1, iterAssemblers)
+    referenceReport <<- cbind.data.frame(referenceReport, cov=(150*referenceReport$refMapping)/(referenceReport$refLength))
+   calculateLook(assemblers = assemblers)
   }
 }
 
-
-referencePlot <- function(refInfos, reportName){
-  refInfos$id <- factor(refInfos$id, levels = refInfos$id[order(refInfos$abundance)])
-  p = ggplot(refInfos, aes(x=id, y=abundance)) +
-    geom_point() +
-    theme_bw() + theme(panel.grid.major.x = element_blank(),panel.grid.minor.x = element_blank()) +
-    theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=2)) +
-    ylab("Abundance")
-  p <-ggplotly(p)
-  htmlwidgets::saveWidget(as.widget(p), reportName)
-}
-
-assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportPath, subsets=c(), ggplotColor="assemblerRealName", 
+linePlot <- function(toPlot, toPlotNames, fileReport, reportOutputPath, subsets=c(), ggplotColor="assemblerRealName",
 			    customShapes = c(),
-                            xAxis = theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1)),
-                            x="gid" ,facet=FALSE, height=8, sortBy="abundance", log=FALSE, se=FALSE, 
-                            points=TRUE, lineTypes=c(rep("solid",40)), manualColor=NULL){
-  
-#  fileReport <- fileReport[with(fileReport, order(sortBy)),]
-  
+          xAxis = theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1)),
+          x="gid" ,facet=FALSE, height=35, log=FALSE, se=FALSE,
+          points=TRUE, lineTypes=c(rep("solid",40)), manualColor=NULL){
+  # This function builds a line plot for each assembler.
+  #
+  # Args:
+  #  toPlot: list of categories to plot (e.g: genome fraction)
+  #  toPlotName: names of the categories to show on the plot
+  #  fileReport: dataframe with assemblers and the categories specified in 'toPlot'
+  #  reportOutputPath: output path
+  #  subsets: Array of functions that compute the subset of data
+  #  ggplotColor: Column that is used to compute the colors
+  #  customShapes: Custom shapes that will be used for the points
+  #  xAxis: Configuration for the axis
+  #  x: Dataframe column that is used for the xAxis
+  #  facet: Plot will be build with facets
+  #  height: Height of the plot
+  #  log: Build axis in log scale
+  #  se: Show confidence interval
+  #  points: Show points.
+  #  lineTypes: Linetypes that are used for the lines
+  #  manualColor: Manual color specification for points and lines.
 
   if(length(subsets) == 0 ){
 	  subsets = c(function(data){ return(data)})
   }
 
-  dir.create(reportPath)
-  print(paste("Building plots in ", reportPath))
+  dir.create(reportOutputPath)
+
   for (n in 1:length(toPlot)){
-#    fileReport = remove_missing(fileReport, vars = toPlot[n], finite = TRUE)
-    
     if(!(toPlot[n] %in% names(fileReport))){
       next
     }
+
+    print("before")
     maxCol = max(fileReport[toPlot[n]], na.rm = TRUE)
     minCol = min(fileReport[toPlot[n]], na.rm = TRUE)
-    
+
+
     p = ggplot(fileReport, aes_string(x=x, color=ggplotColor, y=toPlot[n]))
-#    p = p + geom_point(aes(size = Reference.length))
     p = p + ylim(c(minCol,maxCol))
-    
-    title = c(toPlotNames[n], " with references sorted by ", sortBy)
-    p = p + ggtitle(paste(title, collapse = '')) +
+
+    title = c(toPlotNames[n])
     theme(plot.title = element_text(lineheight=.8))
-    
+
     if(exists("plotConf") && toPlot[n] %in% plotConf$plot){
       minPlotScale = plotConf$min[which(plotConf$plot == toPlot[n])]
       maxPlotScale = plotConf$max[which(plotConf$plot == toPlot[n])]
@@ -219,8 +243,7 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportPath, subsets=c(
     }
 
     p = p + scale_linetype_manual(values = lineTypes)
-    p = p + xAxis 
-    p = p + ylab(toPlotNames[n])
+    p = p + xAxis
     if(!missing(manualColor)){
       p = p + scale_color_manual(values=manualColor)
     }
@@ -232,41 +255,55 @@ assemblyPlot <- function(toPlot, toPlotNames, fileReport, reportPath, subsets=c(
         p = p + scale_shape_manual(values = customShapes)
     }
 
+    p = p + ylab(toPlotNames[n])
+    p = p + xlab(x)
+
     if(facet){
       p = p + facet_grid(assemblerRealName ~ .)
+      p = p + guides(linetype=FALSE, fill=FALSE, shape=FALSE, colour = FALSE)
+      p = p + geom_point(aes(colour = factor(group), shape = factor(group)), alpha=0.80)
       p = p + scale_colour_manual(values = c("#7FC97F", "#386CB0", "#BF5B17"))
-      p = p + guides(linetype=FALSE, fill=FALSE, shape=FALSE)
-      p = p + geom_point(aes(colour = factor(group), shape = factor(group)))
+      p = p + theme_bw()
+      p = p + theme(axis.text.x = element_text(color="black", size=20), text=element_text(family="Helvetica", size = 22), axis.title = element_text(size=22), axis.text.y = element_text(color="black", size=20), plot.title = element_text(size=22), strip.text = element_text(size=12))
     } else {
        if(points){
            legend = guide_legend(nrow = 4, title.position = "top", title.hjust=0.5)
 	   p = p + geom_point(aes(colour = factor(assemblerRealName), shape = group))
-      	   p = p + guides(shape = legend , colour = legend, fill = legend, group = legend, linetype = legend)  
+      	   p = p + guides(shape = legend , colour = legend, fill = legend, group = legend, linetype = legend)
        }
-
        p = p + theme(legend.position="bottom", legend.direction = "horizontal", legend.box = "horizontal")
     }
-    fileName = file.path(reportPath, paste(gsub("\\)","", gsub("\\(","", gsub("#", "", gsub("%", "", gsub(" ", "_",toPlotNames[n]))))), ".png", sep = ""))
-    #ggsave(fileName, p, width=11, height=height, device = "png")
-  #  pl <- ggplotly()
-   # htmlwidgets::saveWidget(as.widget(pl), "index.html", selfcontained = TRUE)
+
+    fileName = file.path(reportOutputPath, paste(gsub("\\)","", gsub("\\(","", gsub("#", "", gsub("%", "", gsub(" ", "_",toPlotNames[n]))))), ".pdf", sep = ""))
+    ggsave(fileName, p, height=height, width=21, device = "pdf")
   }
 }
 
-reorder_size <- function(x) {
-  factor(x, levels = names(sort(table(x))))
-}
+boxPlot <- function(toPlot, toPlotNames, fileReport, reportOutputPath,
+                    height=8, facet=FALSE, flip=FALSE, manualColor=NULL,
+                    data = function(data){ return(data)}, xlabel = "Assemblers", fill=NULL ,category = "group", title = ""){
+  # This function builds a boxplot plot for each assembler.
+  #
+  # Args:
+  #  toPlot: list of categories to plot (e.g: genome fraction)
+  #  toPlotName: names of the categories to show on the plot
+  #  fileReport: Dataframe with assemblers and the categories specified in 'toPlot'
+  #  reportOutputPath: output path
+  #  height: Height of the plot
+  #  facet: Plot will be build with facets
+  #  flip: Flip x and y axis
+  #  manualColor: Manual color specification for the bars.
+  #  data: Function that is used to get the subset of the dataframe for the boxplots.
+  #  fill: Dataframe column that is used for the color of the bars
+  #  category: Category that is used for the barplot.
+  #  title: Title of the plot
 
-boxPlot <- function(toPlot, toPlotNames, fileReport, reportPath, height=8, facet=FALSE, flip=FALSE, manualColor=NULL, data = function(data){ return(data)}, fill=NULL, category = "group"){
-  #fileReport <- fileReport[with(fileReport, order(group)),]
   fileReport$group <- factor(fileReport$group, levels =  names(sort(table(infos$group))))
+  dir.create(reportOutputPath)
 
-  dir.create(reportPath)
-  
-  print(paste("Building plots in ", reportPath))
-  
+  print(paste("Building plots in ", reportOutputPath))
   for (n in 1:length(toPlot)){
-    
+
     if(!(toPlot[n] %in% names(fileReport))){
       next
     }
@@ -279,12 +316,12 @@ boxPlot <- function(toPlot, toPlotNames, fileReport, reportPath, height=8, facet
     }
 
     p = ggplot(data(fileReport), aes)
-    p = p + geom_jitter() + geom_boxplot()
-    p = p + theme(axis.text.x = element_text(angle = 90, hjust=1), plot.title = element_text(size=7))
+    p = p + geom_boxplot()
+    p = p + theme_bw()
+    p = p + theme(axis.text.x = element_text(color="black", size=17), text=element_text(family="Helvetica"), axis.title = element_text(size=17), axis.title.y=element_blank(), axis.text.y = element_text(color="black", size=17), plot.title = element_text(size=17))
+    name = "Genome Fraction [%]"
 
-    title = c(toPlotNames[n], " with references grouped by ANI score ")
-    p = p + ggtitle(paste(title, collapse = ''))
-    
+    p = p + ggtitle(title)
     if(!missing(fill)){
       p = p + scale_fill_manual(values = manualColor, guide = FALSE)
     }
@@ -293,58 +330,90 @@ boxPlot <- function(toPlot, toPlotNames, fileReport, reportPath, height=8, facet
       p = p + coord_flip()
     }
 
-    p = p + ylab(toPlotNames[n])
+    p = p + ylab(name)
+    p = p + xlab(name)
 
     if(facet){
       p = p + facet_grid(assemblerRealName ~ .)
     }
-    fileName = file.path(reportPath, paste(gsub("\\)","", gsub("\\(","", gsub("#", "", gsub("%", "", gsub(" ", "_",toPlotNames[n]))))), ".png", sep = ""))
-    ggsave(fileName, p, device = "png", height=height)
+    fileName = file.path(reportOutputPath, paste(gsub("\\)","", gsub("\\(","", gsub("#", "", gsub("%", "", gsub(" ", "_",toPlotNames[n]))))), ".pdf", sep = ""))
+    ggsave(fileName, p, height=height, device = "pdf")
   }
 }
 
-barPlot <- function(fileReport, reportName, height=8){
+parallelCoordinatesPlot <- function(outputPath, combinedRefReport){
+  # This function builds and exports a parallel coordinates html plot.
+  #
+  # Args:
+  #   outputPath: Path to a directory where the files will be stored
+  #   combinedRefReport: Combined ref dataframe.
 
-  pdf(reportName, width=11, height=height)
-  p = ggplot(fileReport, aes(x=reorder_size(group)))
-  p = p + geom_bar()
-  p = p + theme(axis.text.x = element_text(angle = 90))
-  print(p)
-  dev.off()
+  plot <- parcoords(combinedRefReport[,c("Assembly",
+                                 "N50","X..contigs.....0.bp.",
+                                 "Total.length",
+                                 "X..misassemblies",
+                                 "Unaligned.length",
+                                 "Genome.fraction....",
+                                 "Duplication.ratio",
+                                 "X..mismatches.per.100.kbp",
+                                 "X..predicted.genes..unique.",
+                                 "NA50")],
+            color=list(colorBy="Assembly", colorScale=htmlwidgets::JS('d3.scale.category10()')),
+            width = 1700,
+            rownames=F)
+
+  fileName <- file.path(outputPath, paste("parallel", ".html", sep = ""))
+  saveWidget(plot, file = fileName)
 }
 
+
 buildPlots <- function(outputPath){
+  # This is a wrapper function that contains different configurations for line, box and paralle coordinates plots
+  # Args:
+  #  outputPath: Path to an output directory.
+  #
+
+  print("Starting with Plots")
   referenceReport$assemblerRealName <- factor(referenceReport$assemblerRealName, levels = assemblerLevels)
-  boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_groups" ))
-  boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "boxplots_groups_facet" ), height=40, facet=TRUE)
-
   xAxis = theme(legend.position="bottom", legend.box = "horizontal", axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=10))
-  xAxisFacet = theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=10))
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage_log" ),customShapes=customShapes,height=11 ,x="cov", log=TRUE, sortBy="cov", facet=FALSE)
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, "coverage_no_points_log" ),customShapes=customShapes,height=11, facet=FALSE, x="cov", se=FALSE, log=TRUE, sortBy="cov", points=FALSE, lineTypes=customLines, manualColor=ownColor)
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"coverage-facet_log" ), customShapes=customShapes, xAxis = xAxisFacet, ggplotColor="group", facet=TRUE, x="cov", log=TRUE, sortBy="cov", height=30)
 
+  xAxisFacet = theme(axis.text.x = element_text(angle = 90, vjust = 1, hjust=1, size=10))
 
   refGroups <- names(table(referenceReport$group))
 
   subsetsList <- unlist(lapply(refGroups, function(name){
-	groupFun <- function(data,name){ return(subset(data, group==name));};
-        return(Curry(groupFun, name=name)); 
+    groupFun <- function(data,name){ return(subset(data, group==name));};
+    return(Curry(groupFun, name=name));
   }))
- 
+  linePlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"coverage-facet-subset_log"), subsets=subsetsList , customShapes=customShapes, xAxis = xAxisFacet, ggplotColor="group", facet=TRUE, x="cov", log=TRUE)
 
-  assemblyPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath,"coverage-facet-subset_log" ), subsets=subsetsList , customShapes=customShapes, xAxis = xAxisFacet, ggplotColor="group", facet=TRUE, x="cov", log=TRUE, sortBy="cov", height=30)
+  allRefGroups <- c("all_references")
+  allSubsetsList <- unlist(lapply(allRefGroups, function(name){
+    groupFun <- function(data,name){ return(data);};
+    return(Curry(groupFun, name=name));
+  }))
 
-  mapply(function(subsetFunc,i){ 
-     pdfName <- paste(paste("boxplots_assemblers", as.character(i), sep="_"), "pdf", sep=".")
-     boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, pdfName), data = subsetFunc, flip = TRUE, fill = "assemblerRealName", 
-             manualColor = ownColor, category = "assemblerRealName") 
-  }, 
+  mapply(function(subsetFunc,i){
+    pdfName <- paste("boxplots_assemblers", as.character(i), sep="_")
+    boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, pdfName), data = subsetFunc, flip = TRUE, fill = "assemblerRealName",
+            manualColor = ownColor, category = "assemblerRealName", title = as.character(i))
+  },
   subsetsList, refGroups)
 
+  mapply(function(subsetFunc,i){
+    pdfName <- paste("boxplots_assemblers", as.character(i), sep="_")
+    boxPlot(toPlot, toPlotNames, referenceReport, file.path(outputPath, pdfName), data = subsetFunc, flip = TRUE, fill = "assemblerRealName",
+            manualColor = ownColor, category = "assemblerRealName", title = as.character(i))
+  },
+  allSubsetsList, allRefGroups)
+  parallelCoordinatesPlot(outputPath, combinedRefReport)
 }
 
 writeTables <- function(outputPath){
+  # Exports the references and combined references plot
+  # Args:
+  #   - outputPath: Path to the output directory
+
    write.table(combinedRefReport, file.path(outputPath, "combined_ref_data.tsv"), sep="\t", row.names = FALSE)
    write.table(referenceReport, file.path(outputPath, "ref_data.tsv"), sep="\t", row.names = FALSE)
 }
