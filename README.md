@@ -4,8 +4,6 @@
 
 # Install
 
-* [pandoc](http://pandoc.org/) must be installed 
-
 1.Clone this repository with `git clone https://github.com/pbelmann/quast-evaluator.git`
 
 2.Change working directory: `cd quast-evaluator ` 
