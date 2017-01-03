@@ -3,7 +3,6 @@
 library(grid)
 library(ggplot2)
 library(plyr)
-library(plotly)
 library(RColorBrewer)
 library(mgcv)
 library(MASS)
@@ -349,7 +348,8 @@ parallelCoordinatesPlot <- function(outputPath, combinedRefReport){
   #   combinedRefReport: Combined ref dataframe.
 
   plot <- parcoords(combinedRefReport[,c("Assembly",
-                                 "N50","X..contigs.....0.bp.",
+                                 "N50",
+                                 "X..contigs.....0.bp.",
                                  "Total.length",
                                  "X..misassemblies",
                                  "Unaligned.length",

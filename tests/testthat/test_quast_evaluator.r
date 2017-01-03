@@ -17,7 +17,7 @@ create_output_dir <- function(dirPath){
 output = "tests/testthat/output"
 setwd("../..")
 
-outputDirs = c("coverage_log", "coverage_no_points_log", "coverage-facet_log", "boxplots_groups_facet", "boxplots_groups", "coverage-facet-subset_log")
+outputDirs = c("coverage-facet-subset_log", "boxplots_assemblers_1", "boxplots_assemblers_all_references", "coverage-facet-subset_log", "boxplots_assemblers_2", "combined_ref_data.tsv", "parallel.html", "ref_data.tsv")                                                       
 
 cli_test_that <- function(description, test_code) {
 
@@ -42,10 +42,24 @@ cli_test_that("Script produces expected output files.(new mode)", {
 
 cli_test_that("Run scripts with plot configuration", {
   cmd = paste("Rscript", "quast_evaluator_cli.r","new",
-	      "tests/testthat/data/assemblers.tsv",
+	      " tests/testthat/data/assemblers.tsv ",
 	      " tests/testthat/data/info.tsv",
-	      "-o", output,
-	      "-c", "tests/testthat/data/info.tsv"
+	      " -o ", output,
+	      " -c ", " tests/testthat/data/plots_conf.tsv"
+	      )
+
+  if(system(cmd) != 0){
+      expect_true(FALSE)
+  } 
+
+  lapply(outputDirs, function(outputDir) expect_true(file.exists(normalizePath(file.path(output, outputDir)))))
+})
+
+cli_test_that("Scripts produces expected output files (reuse mode)", {
+  cmd = paste("Rscript", "quast_evaluator_cli.r","reuse",
+              " tests/testthat/data/combined_ref_data.tsv",
+              " tests/testthat/data/ref_data.tsv",
+	      " -o ", output
 	      )
 
   if(system(cmd) != 0){
