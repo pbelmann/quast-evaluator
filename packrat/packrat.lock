@@ -255,14 +255,6 @@ GithubUsername: timelyportfolio
 GithubRef: master
 GithubSha1: b143b9b248956c110ad6e53cc360d8320805f119
 
-Package: plotly
-Source: CRAN
-Version: 4.5.6
-Hash: f55e6b78f2701911b98cb23d7e3d2bcb
-Requires: base64enc, digest, dplyr, ggplot2, hexbin, htmlwidgets, httr,
-    jsonlite, lazyeval, magrittr, purrr, scales, tibble, tidyr,
-    viridisLite
-
 Package: plyr
 Source: CRAN
 Version: 1.8.3
