@@ -1,0 +1,7 @@
+/*@import 'style-loader!css-loader!~/node_modules/bootstrap/dist/bootstrap.css';*/
+/*@import '~bootstrap/less/bootstrap.less';*/
+@import '~bootstrap/dist/css/bootstrap.css';
+
+.uniq_gold {
+    background-color: gold;
+}

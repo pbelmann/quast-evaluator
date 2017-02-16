@@ -1,0 +1,7 @@
+version: 0.1.0
+results:
+  - name: HTML
+    type: html
+    inline: false
+    value: index.html
+    description: A summary of multiple metrics.
