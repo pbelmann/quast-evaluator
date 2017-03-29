@@ -13,7 +13,7 @@ RUN sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com E084DAB9 && \
    sudo apt-get install -y r-base r-recommended libicu52 libcurl4-openssl-dev pandoc && \
    R -e 'install.packages("packrat" , repos="http://cran.us.r-project.org"); packrat::restore()'
 
-ADD /web /
+ADD /web /web
 WORKDIR /web
 RUN apt-get install wget
 WORKDIR /opt
@@ -22,4 +22,4 @@ RUN ln -s  /opt/node-v6.9.5-linux-x64/bin/node   /usr/local/bin/node
 RUN ln -s  /opt/node-v6.9.5-linux-x64/bin/npm   /usr/local/bin/npm
 ADD cami.R /
 ADD biobox.yaml /
-ENTRYPOINT ["/quast_evaluator.r"]
+WORKDIR /
